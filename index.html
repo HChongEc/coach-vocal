@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"/><meta content="width=device-width,initial-scale=1" name="viewport"/><title>Pitch Coach 0.4.0 · Piano Roll</title><style>
+:root{color-scheme:dark;font-family:system-ui;background:#101820;color:#edf4f6}*{box-sizing:border-box}body{max-width:1050px;margin:auto;padding:14px}h1{font-size:1.35rem;margin:0}.sub,small{color:#a9bac6}.panel{background:#192630;border:1px solid #344653;border-radius:12px;padding:14px;margin-top:12px}.row{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}button,input[type=file],select{font:inherit}button{background:#28505c;border:1px solid #56818d;color:white;border-radius:8px;padding:10px 14px;cursor:pointer}button:disabled{opacity:.45}input[type=file]{display:block;width:146px;max-width:100%;min-width:0;overflow:hidden;font-size:0;color:transparent;padding:0;border:0}
+input[type=file]::file-selector-button{font-size:13px;cursor:pointer;max-width:100%;padding:9px 8px;margin:0;border-radius:7px;background:#28505c;border:1px solid #56818d;color:white}
+#filename{display:block;min-width:0;max-width:100%;overflow-wrap:anywhere}
+.file-row{justify-content:flex-start;gap:9px}.file-row #filename{flex-basis:100%}
+#player{display:block;position:sticky;top:0;z-index:12;width:100%;min-width:0;max-width:100%;height:54px;flex:none;background:#192630;border-radius:6px}
+.panel{min-width:0;overflow:visible}progress{display:block;max-width:100%}
+.hold-row{justify-content:flex-start;gap:10px}.hold-row input[type=range]{width:155px;max-width:48vw;flex:none}.hold-row output{min-width:50px;text-align:left}
+#roll{touch-action:none;-webkit-user-select:none;user-select:none}audio{width:100%;margin-top:12px}input[type=range]{accent-color:#4ed2b7}.metrics{display:flex;gap:22px;flex-wrap:wrap;margin:12px 0}.metrics>div{min-width:85px}.big{font-size:1.9rem;font-weight:700}#roll{display:block;width:100%;height:320px;background:#101923;border-radius:8px}.note{font-size:.8rem;color:#aabdc8}#status{font-size:.88rem;color:#c8e2e9}#diag{white-space:pre-wrap;overflow-wrap:anywhere}.zoomrow{margin:12px 0 10px;gap:10px}.zoomrow input[type=range]{flex:1;min-width:130px}.zoomrow label{font-size:.85rem}.visualrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:10px 0}.visualrow label{font-size:.82rem}.visualrow input{vertical-align:middle}.tag{font-size:.7rem;border:1px solid #506775;border-radius:20px;padding:4px 8px}details{margin-top:12px}.track-settings{border:1px solid #344653;border-radius:9px;padding:10px 12px;background:#15222b}.track-settings summary{font-weight:650}.mic-control{justify-content:flex-start;margin-top:12px}.visual-settings{border:1px solid #344653;border-radius:9px;padding:10px 12px;background:#15222b}.visual-settings summary{font-weight:650}.settings-content{padding:7px 0 3px}.settings-content .zoomrow{margin:12px 0 10px}summary{cursor:pointer}.analysis-controls{margin-top:12px;justify-content:flex-start}.analysis-controls button{padding:8px 12px}#analysisStatus{font-size:.82rem}.stem-panel{margin-top:12px;border:1px solid #4b6472;border-radius:10px;padding:12px;background:#14222c}.stemchannel{padding:10px 0;border-top:1px solid #3c505c;margin-top:10px}.stemchannel input[type=range]{width:110px;vertical-align:middle}.pitch-controls{justify-content:flex-start;margin-top:10px;gap:8px}.pitch-controls input{flex:1;min-width:100px;max-width:300px}.pitch-controls button{padding:6px 12px}.pitch-controls strong{min-width:108px;text-align:center}.error{color:#ff9b88}.ok{color:#65d8a9}
+/* MVSep experimental account panel — isolated from audio processing */
+.mv-account{margin:12px 0;border:1px solid #456071;border-radius:9px;padding:11px;background:#111e28}.mv-account summary{font-weight:650}.mv-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}.mv-actions button{padding:9px 7px;font-size:.86rem}.mv-login{display:none;margin-top:12px}.mv-login.open{display:block}.mv-login label{display:block;margin:8px 0;font-size:.84rem}.mv-login input{display:block;width:100%;max-width:390px;padding:9px;border:1px solid #56818d;border-radius:7px;background:#101820;color:#edf4f6;font:inherit}.mv-msg{font-size:.8rem;line-height:1.5;overflow-wrap:anywhere;margin:8px 0}.mv-info{font-size:.77rem;color:#a9bac6;margin-top:8px}
+.bridge-box{margin:12px 0;border:1px solid #456071;border-radius:9px;padding:11px;background:#111e28}.bridge-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#80909b;margin-right:6px}.bridge-dot.ok{background:#65d8a9}.bridge-dot.error{background:#ff9b88}.bridge-url{display:block;width:100%;margin-top:8px;padding:9px;border:1px solid #56818d;border-radius:7px;background:#101820;color:#edf4f6;font:inherit}.bridge-test-grid{display:grid;gap:7px;margin-top:10px}.bridge-test{border:1px solid #456071;border-radius:8px;padding:9px;overflow-wrap:anywhere}.bridge-test strong{display:block}.bridge-test .sub{font-size:.78rem}.bridge-actions{justify-content:flex-start;margin-top:10px}
+
+#smartEqSettings{justify-content:flex-start;gap:14px;margin:9px 0}#smartEqSettings[hidden]{display:none}#smartEqSettings input{width:95px;padding:7px;background:#101820;border:1px solid #56818d;border-radius:6px;color:white;font:inherit}#rollShell{position:relative;width:100%;background:#101923;border-radius:8px;overflow:hidden}#rollFullscreen{position:absolute;right:9px;bottom:9px;z-index:5;padding:6px 11px;font-size:22px;line-height:1.2;background:#182d3ddd}#rollFullZoom{display:none;position:absolute;top:12px;right:12px;z-index:5;background:#152631e8;border:1px solid #55717c;border-radius:9px;padding:8px 11px;align-items:center;gap:8px;font-size:12px}#rollFullZoom input{width:100px}#rollShell:fullscreen,#rollShell:-webkit-full-screen,#rollShell.roll-full-fallback{position:fixed;inset:0;width:100vw;height:100dvh;border-radius:0;z-index:9999;background:#101923}#rollShell:fullscreen #roll,#rollShell:-webkit-full-screen #roll,#rollShell.roll-full-fallback #roll{height:100%;width:100%}#rollShell:fullscreen #rollFullZoom,#rollShell:-webkit-full-screen #rollFullZoom,#rollShell.roll-full-fallback #rollFullZoom{display:flex}.tuner-heading{font-size:.9rem;margin:18px 0 8px;padding-top:12px;border-top:1px solid #344653}
+.pc-session-bar{display:flex;align-items:center;gap:12px;margin-bottom:12px;min-height:35px}.pc-session-menu{position:relative;margin:0;z-index:30}.pc-session-menu summary{list-style:none;border:1px solid #466174;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;background:#1c3545;color:#e6f6ff}.pc-session-menu summary::-webkit-details-marker{display:none}.pc-session-items{position:absolute;top:calc(100% + 5px);left:0;display:flex;flex-direction:column;gap:3px;background:#172936;border:1px solid #466174;box-shadow:0 12px 30px #0008;border-radius:10px;padding:6px;min-width:175px}.pc-session-items button{width:100%;background:transparent;border:0;color:#e8f5ff;text-align:left;padding:10px 12px;white-space:nowrap}.pc-session-items button:hover{background:#294c60}.pc-session-bar .sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pc-copyright{text-align:center;margin:16px 0 6px}#pcSessionFile[hidden]{display:none!important}.pc-session-menu:not([open]) .pc-session-items{display:none}
+#harmonyFullToggle{display:none;position:absolute;left:12px;bottom:12px;z-index:7;background:#162b3de8;border:1px solid #496779;border-radius:8px;padding:8px 11px;color:#d8f5f1;font-size:13px;align-items:center;gap:6px}#rollShell:fullscreen #harmonyFullToggle,#rollShell:-webkit-full-screen #harmonyFullToggle,#rollShell.roll-full-fallback #harmonyFullToggle{display:flex}.harmony-controls{gap:12px;align-items:center;flex-wrap:wrap}.harmony-controls select{max-width:145px}.harmony-controls .sub{flex-basis:100%}
+</style><link href="./manifest.webmanifest" rel="manifest"/><meta content="#101820" name="theme-color"/><meta content="yes" name="apple-mobile-web-app-capable"/><meta content="Pitch Coach" name="apple-mobile-web-app-title"/><link href="./icon-192.png" rel="apple-touch-icon"/><style id="pitchCoach330">#smartEqSettings .eq-range-wrap{width:min(100%,450px);display:flex;flex-direction:column;gap:7px}#smartEqSettings .eq-range-wrap>label{display:flex;justify-content:space-between;gap:14px;align-items:center}#smartEqSettings .eq-dual{height:36px;position:relative;touch-action:none}#smartEqSettings .eq-track,#smartEqSettings .eq-selected{position:absolute;top:15px;height:6px;border-radius:5px;pointer-events:none}#smartEqSettings .eq-track{left:0;right:0;background:#344b5c}#smartEqSettings .eq-selected{background:#36b6d5}#smartEqSettings .eq-dual input{position:absolute;left:0;top:0;width:100%;height:36px;margin:0;padding:0;background:transparent;appearance:none;-webkit-appearance:none;pointer-events:none;border:0}#smartEqSettings .eq-dual input::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#e8f8ff;border:3px solid #2294b5;pointer-events:auto;box-shadow:0 1px 5px #0008}#smartEqSettings .eq-dual input::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#e8f8ff;border:3px solid #2294b5;pointer-events:auto}#smartEqSettings .eq-dual input::-webkit-slider-runnable-track{background:transparent}#eqLowSlider{z-index:2}#eqHighSlider{z-index:3}#rollFullPlayer{display:none}#rollShell:fullscreen,#rollShell:-webkit-full-screen,#rollShell.roll-full-fallback{display:flex;flex-direction:column}#rollShell:fullscreen #rollFullPlayer,#rollShell:-webkit-full-screen #rollFullPlayer,#rollShell.roll-full-fallback #rollFullPlayer{display:block;flex:0 0 auto;padding:8px 12px 0;z-index:6;background:#101923}#rollShell:fullscreen #rollFullPlayer #player,#rollShell:-webkit-full-screen #rollFullPlayer #player,#rollShell.roll-full-fallback #rollFullPlayer #player{width:100%;height:48px;position:static}#rollShell:fullscreen #roll,#rollShell:-webkit-full-screen #roll,#rollShell.roll-full-fallback #roll{flex:1;min-height:0;height:auto}#rollShell:fullscreen #rollFullZoom,#rollShell:-webkit-full-screen #rollFullZoom,#rollShell.roll-full-fallback #rollFullZoom{top:69px}</style><style id="pitchCoachChordTimeline">#chordTimeline{position:relative;box-sizing:border-box;height:38px;min-height:38px;width:100%;background:#182c38;border-bottom:1px solid #4b6978;color:#e3f5f6;overflow:hidden;font-size:12px;z-index:4}#chordTimelineEmpty{display:flex;align-items:center;padding:0 12px;height:100%;color:#9bb8c3}#chordTimelineTrack{position:absolute;inset:0;overflow:hidden}#chordTimelineTrack[hidden]{display:none}#chordTimelineTrack .chord-region{position:absolute;top:3px;bottom:3px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid #54879a;border-radius:5px;background:#264957;color:#d7f2fb;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}#chordTimelineTrack .chord-region.active{background:#267b8d;border-color:#8de2dd;color:#fff}#chordTimelineTrack .chord-cursor{position:absolute;top:0;bottom:0;width:2px;background:#f7c56b;pointer-events:none;z-index:2}#rollShell:fullscreen #roll,#rollShell:-webkit-full-screen #roll,#rollShell.roll-full-fallback #roll{flex:1;min-height:0;height:auto}#rollShell:fullscreen #chordTimeline,#rollShell:-webkit-full-screen #chordTimeline,#rollShell.roll-full-fallback #chordTimeline{flex:0 0 38px}#rollShell:fullscreen #rollFullZoom,#rollShell:-webkit-full-screen #rollFullZoom,#rollShell.roll-full-fallback #rollFullZoom{top:107px}</style><style id="chordMotionStable">#chordTimelineTrack{contain:layout paint}#chordTimelineTrack .chord-region{backface-visibility:hidden;transform-origin:left center}#chordTimelineTrack .chord-region,#chordTimelineTrack .chord-cursor{transition:none!important;animation:none!important}</style><style>#harmonyEngine{max-width:100%;min-width:0}#chordEngineSettings .row{margin:8px 0}#chordEngineSettings[hidden],#chordSummary[hidden]{display:none!important}.harmony-controls{margin-top:12px}.harmony-controls label[for=harmonyInterval]{flex-basis:100%}.harmony-controls #harmonyGenerate{flex-basis:100%}</style><style>.tuner-inline{display:flex;align-items:center;gap:10px;justify-content:space-between;margin:10px 0;min-width:0}.tuner-inline .mic-control{margin:0;flex:0 1 auto;min-width:0}.tuner-inline #mic{font-size:clamp(11px,3.4vw,16px);padding:9px 7px;white-space:normal}.tuner-inline .metrics{margin:0;gap:8px;flex-wrap:nowrap;flex:0 0 auto}.tuner-inline .metrics>div{min-width:0;text-align:center}.tuner-inline .big{font-size:clamp(14px,4.5vw,23px);white-space:nowrap}.tuner-inline #cents{min-width:5.6em;font-variant-numeric:tabular-nums}.tuner-inline small{font-size:11px}</style><style>summary{list-style:none!important}summary::-webkit-details-marker{display:none!important}summary::marker{content:""}</style><style>#chordEngineSettings .bass-cutoff-fixed{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;width:100%;min-width:0}#chordEngineSettings .bass-cutoff-fixed label{display:flex;justify-content:space-between;align-items:center;min-width:0;gap:8px}#bassCutoffValue{display:inline-block;min-width:7ch;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}#bassCutoff{width:100%!important;min-width:0;max-width:100%;margin:0;touch-action:pan-y}#bassProgress{display:block;width:100%;height:8px}</style></head><body>
+<header class="row"><div><h1>🎙 Pitch Coach <span class="tag">0.4.0</span></h1></div><span id="status">Selecciona un audio</span></header>
+<section class="panel"><div class="pc-session-bar"><details class="pc-session-menu" id="pcSessionMenu"><summary>▤ Sesión</summary><div class="pc-session-items"><button type="button" id="pcNew">Nuevo</button><button type="button" id="pcOpen">Abrir</button><button type="button" id="pcSaveAs">Guardar como…</button><button type="button" id="pcMidiExport">Exportar MIDI</button></div></details><span id="pcSessionLabel" class="sub">Sin título</span><input type="file" id="pcSessionFile" hidden></div><div class="row file-row"><label for="file"><b>Canción</b></label><input accept="audio/*,.mp3,.mp4,.aac,.m4a,.ogg,.oga,.wav,.wave,.aif,.aiff,video/mp4,.mid,.midi,audio/midi,audio/x-midi" id="file" type="file"/><span class="sub" id="filename">Ningún archivo</span></div><audio controls="" id="player" playsinline="" preload="metadata"></audio><div class="row" style="justify-content:flex-start;gap:6px;margin:8px 0"><span class="tag" id="keyIndicator">Tonalidad: por detectar</span><span class="tag" id="tempoIndicator">Tempo: por detectar</span></div><div class="row"><label>Volumen <input id="volume" max="100" min="0" type="range" value="75"/></label></div><details class="track-settings"><summary>⚙ Ajustes de Pista</summary><div class="settings-content"><div class="row pitch-controls"><label for="transpose"><b>Tonalidad</b></label><button aria-label="Bajar un semitono" id="pitchDown" type="button">−</button><input aria-label="Transposición en semitonos" id="transpose" max="12" min="-12" step="1" type="range" value="0"/><button aria-label="Subir un semitono" id="pitchUp" type="button">+</button><strong id="transposeValue">Original · 0</strong><button id="pitchReset" type="button">Restablecer</button></div><label style="display:none">Voces <select id="voices"><option>1</option><option>2</option><option>3</option><option>4</option></select></label><div class="stem-panel"><div id="dspEngine"><div class="row"><strong id="engineDescription">MDX · Laboratorio local</strong><span class="tag" id="engineTag">Modelo neuronal</span></div><div class="row" style="margin:12px 0;gap:10px;align-items:center;flex-wrap:wrap"><button disabled id="dspRun" type="button">Analizar</button><button disabled id="dspCancel" type="button" hidden>Cancelar</button><span class="sub" id="dspStatus">Selecciona una canción</span></div><progress id="dspProgress" max="100" style="width:100%" value="0"></progress></div><div class="row"><label style="display:none"><input checked="checked" id="stemEnable" type="checkbox"/> Activar canales separados</label><span class="sub" id="stemStatus" style="display:none">Desactivado</span></div><div class="stemchannel"><div class="row"><strong style="color:#ffe09a">🎤 Voz</strong><label>Volumen <input id="stemVoice" max="150" min="0" type="range" value="100"/><output id="stemVoiceValue">100%</output></label><button aria-label="Restablecer volumen voz" id="mdxVoiceReset" title="Restablecer volumen voz" type="button">↻</button></div><div class="row" style="margin:8px 0"><label for="recognitionEngine"><b>Motor de reconocimiento</b> <select id="recognitionEngine"><option value="native">Simple</option><option value="crepevoice" selected>Inteligente</option></select></label></div><div class="row" id="smartEqSettings" hidden><div class="eq-range-wrap"><label><b>EQ de detección</b> <span id="eqRangeLabel">300 Hz – 1.2 kHz</span></label><div class="eq-dual" id="eqDual"><div class="eq-track"></div><div class="eq-selected" id="eqSelected"></div><input id="eqLowSlider" aria-label="Frecuencia de corte inferior" type="range" min="0" max="1000" step="1"/><input id="eqHighSlider" aria-label="Frecuencia de corte superior" type="range" min="0" max="1000" step="1"/></div><input id="eqLow" type="hidden" value="300"/><input id="eqHigh" type="hidden" value="1200"/></div></div><div class="row analysis-controls"><button disabled="" id="analyze" type="button">Detectar Melodía</button><button disabled="" id="cancelAnalysis" type="button">Cancelar</button><span class="sub" id="analysisStatus">Detecta la melodía del archivo original o del canal de voz</span></div></div><div class="stemchannel"><div class="row"><strong style="color:#90c8ff">🎹 Pista</strong><label>Volumen <input id="stemInstrument" max="150" min="0" type="range" value="100"/><output id="stemInstrumentValue">100%</output></label><button aria-label="Restablecer volumen instrumental" id="mdxInstReset" title="Restablecer volumen instrumental" type="button">↻</button></div></div></div></div></details></section>
+
+<section class="panel"><div class="row"><strong>Melodía + afinador</strong></div><div class="tuner-inline"><div class="row mic-control"><button id="mic" type="button">🎤 Activar micrófono</button></div><div class="metrics"><div><div class="big" id="note">—</div><small>Nota</small></div><div><div class="big" id="cents">—</div><small>Cents</small></div><div style="display:none"><div id="confidence">—</div><small>Confianza</small></div><div style="display:none"><div id="voiceState">Inactivo</div><small>Estado vocal</small></div></div></div><div id="rollShell"><div id="chordTimeline" aria-label="Acordes inferidos" title="Acordes estimados a partir del bajo y la melodía"><span id="chordTimelineEmpty">Acordes: sin analizar</span><div id="chordTimelineTrack" hidden></div></div><canvas aria-label="Piano roll y voz detectada" id="roll"></canvas><label id="harmonyFullToggle" title="Mostrar armonía"><input id="harmonyFullShow" type="checkbox" disabled/> Armonía</label><div id="rollFullZoom"><label for="zoomFull">Zoom <output id="zoomFullValue">24</output></label><input id="zoomFull" type="range" min="12" max="48" step="1" value="24"/></div><button id="rollFullscreen" type="button" aria-label="Pantalla completa del piano roll" title="Pantalla completa">⛶</button></div><details class="visual-settings"><summary>⚙ Ajustes de piano roll y afinador</summary><div class="settings-content">
+<div class="row"><div class="row" style="justify-content:flex-start;gap:10px"><label>Raíz <select id="manualRoot"><option value="0">C</option><option value="1">C♯</option><option value="2">D</option><option value="3">D♯</option><option value="4">E</option><option value="5">F</option><option value="6">F♯</option><option value="7">G</option><option value="8">G♯</option><option value="9">A</option><option value="10">A♯</option><option value="11">B</option></select></label><label>Tipo <select id="manualMode"><option value="major">Mayor</option><option value="minor">Menor</option></select></label></div><div class="row" style="justify-content:flex-start"><label><input type="checkbox" id="manualKey"> Usar tonalidad manual</label></div><label for="scaleType">Resaltar escala <select id="scaleType"><option value="major">Mayor natural</option><option value="minor">Menor natural</option><option value="harmonic">Menor armónica</option><option value="melodic">Menor melódica (ascendente)</option><option value="pentatonic">Pentatónica mayor</option></select></label><label for="scaleHighlight">Guía de Tonalidad <input id="scaleHighlight" type="range" min="0" max="100" value="40" step="5"/><output id="scaleHighlightValue">40%</output></label></div>
+<div class="row"><label for="guideInstrument">Sonido al tocar notas <select id="guideInstrument"><option value="piano">Piano</option><option value="pad">Pad</option><option value="off">Silencio</option></select></label><label for="guideVolume">Volumen de Piano <input id="guideVolume" type="range" min="0" max="100" value="45"/></label></div>
+<div class="row zoomrow"><label for="zoom">Zoom vertical <strong id="zoomValue">24 semitonos (2 octavas)</strong></label><input id="zoom" max="48" min="12" step="1" type="range" value="24"/><label class="note"><input checked="" id="follow" type="checkbox"/> Seguir nota detectada</label></div><h3 class="tuner-heading">Afinador</h3><div class="visualrow"><label>Altura Visual <strong id="thickValue">85%</strong> <input id="thick" max="100" min="40" step="5" type="range" value="85"/></label></div>
+<div class="visualrow"><label>Caída <strong id="dropValue">6 semitonos</strong> <input id="drop" max="12" min="4" step="1" type="range" value="6"/></label></div>
+<div class="row hold-row"><label class="note" for="hold">Persistencia</label><input id="hold" max="300" min="50" step="10" type="range" value="150"/><output id="holdValue">150 ms</output></div>
+</div></details></section>
+<section class="panel"><details class="visual-settings"><summary>🎼 Arreglista</summary><div class="settings-content">
+<div class="row"><label for="harmonyEngine"><b>Motor</b> <select id="harmonyEngine"><option value="diatonic">Paralelas</option><option value="chords" selected>Contextual</option></select></label></div>
+<div id="chordEngineSettings">
+<div class="row bass-cutoff-fixed"><label for="bassCutoff">Frecuencia de corte <output id="bassCutoffValue">180 Hz</output></label><input id="bassCutoff" type="range" min="0" max="1000" value="620" step="1"/></div>
+
+<div class="row"><button type="button" id="bassAnalyze" disabled>Detectar bajo y acordes</button><span class="sub" id="bassStatus"></span></div>
+<div class="row"><progress id="bassProgress" max="100" value="0" style="width:100%"></progress></div>
+<div id="chordSummary" hidden></div>
+</div>
+<div class="row harmony-controls">
+<label for="harmonyInterval">Voz <select id="harmonyInterval"><option value="12">Oct sup</option><option value="2">3ra sup</option><option value="1">2da sup</option><option value="-1" selected>2da inf</option><option value="-2">3ra inf</option><option value="-12">Oct inf</option></select></label>
+<button id="harmonyGenerate" type="button" disabled>Generar</button>
+<label class="note"><input id="harmonyShow" type="checkbox" disabled/> Mostrar melodía</label><label class="note"><input id="harmonyPlay" type="checkbox" disabled/> Reproducir melodía generada (solo MIDI)</label>
+<span class="sub" id="harmonyStatus">Primero detecta la melodía y la tonalidad.</span>
+</div>
+
+</div></details></section><p class="note pc-copyright">© Hugo Chong · 2026. Derechos reservados.</p><span id="diag" hidden></span>
+
+<script>
+'use strict';
+window.PITCH_ENGINE_HTML=''; // Laboratorio 0.4.0: pestaña MDX desactivada; prueba directa abajo.
+
+let mdxOutputUrls=[],dspToken=0;
+function mdxMark(){};
+function mdxDispose(){stopStemPlayback();dspToken++;for(const u of mdxOutputUrls)URL.revokeObjectURL(u);mdxOutputUrls=[];document.getElementById('analyze').disabled=!document.getElementById('file').files?.length;}
+function mdxMakeWav(buffer,seconds=buffer.duration){
+ const sr=buffer.sampleRate,frames=Math.min(buffer.length,Math.floor(seconds*sr)),channels=Math.min(2,buffer.numberOfChannels);
+ const bytes=new ArrayBuffer(44+frames*channels*2),v=new DataView(bytes);let at=0;
+ const str=x=>{for(let i=0;i<x.length;i++)v.setUint8(at++,x.charCodeAt(i))};
+ const u16=x=>{v.setUint16(at,x,true);at+=2},u32=x=>{v.setUint32(at,x,true);at+=4};
+ str('RIFF');u32(36+frames*channels*2);str('WAVEfmt ');u32(16);u16(1);u16(channels);u32(sr);u32(sr*channels*2);u16(channels*2);u16(16);str('data');u32(frames*channels*2);
+ const data=Array.from({length:channels},(_,i)=>buffer.getChannelData(i));
+ for(let i=0;i<frames;i++)for(let c=0;c<channels;c++){const x=Math.max(-1,Math.min(1,data[c][i]));v.setInt16(at,x<0?Math.round(x*32768):Math.round(x*32767),true);at+=2}
+ return new Blob([bytes],{type:'audio/wav'});
+}
+function fft(re,im,inverse=false){let n=re.length;for(let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]]}}for(let len=2;len<=n;len*=2){let a=(inverse?2:-2)*Math.PI/len,wr0=Math.cos(a),wi0=Math.sin(a);for(let i=0;i<n;i+=len){let wr=1,wi=0;for(let j=0;j<len/2;j++){let u=i+j,v=u+len/2,tr=re[v]*wr-im[v]*wi,ti=re[v]*wi+im[v]*wr;re[v]=re[u]-tr;im[v]=im[u]-ti;re[u]+=tr;im[u]+=ti;let q=wr*wr0-wi*wi0;wi=wr*wi0+wi*wr0;wr=q}}}if(inverse)for(let i=0;i<n;i++){re[i]/=n;im[i]/=n}}
+function wav(channels,sr){const n=channels[0].length,c=channels.length,bytes=44+n*c*2,a=new ArrayBuffer(bytes),v=new DataView(a);function str(p,s){for(let i=0;i<s.length;i++)v.setUint8(p+i,s.charCodeAt(i))}str(0,'RIFF');v.setUint32(4,bytes-8,true);str(8,'WAVE');str(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,c,true);v.setUint32(24,sr,true);v.setUint32(28,sr*c*2,true);v.setUint16(32,c*2,true);v.setUint16(34,16,true);str(36,'data');v.setUint32(40,n*c*2,true);let p=44;for(let i=0;i<n;i++)for(let k=0;k<c;k++){let x=Math.max(-1,Math.min(1,channels[k][i]));v.setInt16(p,x<0?x*32768:x*32767,true);p+=2}return new Blob([a],{type:'audio/wav'})}
+
+const dspYield=()=>new Promise(r=>setTimeout(r,0));
+let pitchEngineWindow=null, pitchEngineJob=null, pitchEngineStart=0;
+const engineStatus=()=>document.getElementById('dspStatus');
+function openPitchEngine(){
+ const f=document.getElementById('file').files?.[0];
+ if(!f){engineStatus().textContent='Selecciona primero una canción';return;}
+ if(pitchEngineWindow&&!pitchEngineWindow.closed){pitchEngineWindow.focus();engineStatus().textContent='Motor abierto · revisa la otra pestaña';return;}
+ pitchEngineWindow=null;
+ const job='pc-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+ pitchEngineJob=job; pitchEngineStart=Date.now();
+ const engineURL=URL.createObjectURL(new Blob([window.PITCH_ENGINE_HTML],{type:'text/html'}));
+ const popup=window.open(engineURL,'_blank');
+ // No revocar la URL durante la inferencia; se libera al recibir resultado o cierre.
+ if(!popup){engineStatus().textContent='Safari o SiteCase bloqueó la pestaña. Prueba desde HTTPS en Safari.';pitchEngineJob=null;return;}
+ pitchEngineWindow=popup;
+ document.getElementById('dspRun').disabled=true;
+ engineStatus().textContent='Motor abierto · esperando conexión…';
+ document.getElementById('dspProgress').value=0;
+
+ function onMessage(e){
+  if(e.source!==popup || !e.data || e.data.channel!=='pitch-engine')return;
+  if(e.data.type!=='ready' && e.data.job!==job)return;
+  const m=e.data;
+  if(m.type==='ready'){
+   started=true;
+   try{popup.postMessage({channel:'pitch-coach',type:'start',job,file:f},'*')}catch(err){engineStatus().textContent='No se pudo transferir el audio: '+err.message}
+  }
+  if(m.type==='progress'){
+   engineStatus().textContent=m.message+' · '+Math.round((Date.now()-pitchEngineStart)/1000)+' s';
+   if(Number.isFinite(m.percent))document.getElementById('dspProgress').value=m.percent;
+  }
+  if(m.type==='result'){
+   if(!(m.voice instanceof Blob)||!(m.instrument instanceof Blob))return;
+   const v=URL.createObjectURL(m.voice),i=URL.createObjectURL(m.instrument);
+   for(const u of mdxOutputUrls)URL.revokeObjectURL(u);
+   mdxOutputUrls=[v,i];stopStemPlayback();enforceConsoleMute();switchConsole();
+   document.getElementById('dspProgress').value=100;
+   engineStatus().textContent='Pistas recibidas · '+Math.round((Date.now()-pitchEngineStart)/1000)+' s';
+   document.getElementById('analyze').disabled=false;
+   popup.postMessage({channel:'pitch-coach',type:'ack',job},'*');
+   cleanup();
+  }
+  if(m.type==='closed'){
+   engineStatus().textContent='Motor cerrado · puedes volver a pulsar Analizar';cleanup();return;
+  }
+  if(m.type==='error'){
+   engineStatus().textContent='Error del motor: '+m.message;
+   document.getElementById('dspRun').disabled=false;cleanup();
+  }
+ }
+ let finished=false, started=false, leftForEngine=false;
+ function cleanup(){
+  if(finished)return;finished=true;
+  window.removeEventListener('message',onMessage);
+  URL.revokeObjectURL(engineURL);
+  window.removeEventListener('blur',markLeaving);
+  window.removeEventListener('focus',onReturn);
+  document.removeEventListener('visibilitychange',onReturn);
+  document.getElementById('dspRun').disabled=false;
+  pitchEngineJob=null;
+  if(pitchEngineWindow===popup)pitchEngineWindow=null;
+ }
+ window.addEventListener('message',onMessage);
+ // Sin sondeo: solo eventos del navegador y mensajes del motor.
+ function markLeaving(){leftForEngine=true;}
+ function onReturn(){
+  if(finished||!leftForEngine||document.visibilityState==='hidden')return;
+  // Volver a Pitch Coach no demuestra que MDX haya terminado:
+  // desbloqueamos el control y permitimos reintentar sin recargar el audio.
+  if(pitchEngineJob===job){
+   engineStatus().textContent=popup.closed
+    ?'Motor cerrado · puedes volver a analizar'
+    :'Has vuelto a Pitch Coach · puedes reintentar o regresar al motor';
+   document.getElementById('dspRun').disabled=false;
+   if(popup.closed)cleanup();
+  }
+ }
+ window.addEventListener('blur',markLeaving);
+ window.addEventListener('focus',onReturn);
+ document.addEventListener('visibilitychange',onReturn);
+}
+
+// Selector Pitch Engine: MDX separado o DSP local.
+// La separación IA queda inhabilitada; VocalDSP es el único procesador activo.
+function updatePitchEngineSelector(){
+ document.getElementById('engineDescription').textContent='VocalDSP · Procesamiento local';
+ document.getElementById('engineTag').textContent='DSP';
+ document.getElementById('dspCancel').hidden=false;
+ document.getElementById('dspStatus').textContent='Selecciona Analizar para procesar';
+ document.getElementById('dspProgress').value=0;
+}
+updatePitchEngineSelector();
+async function dspProcess(){
+ const f=document.getElementById('file').files?.[0];if(!f)return;
+ const mine=++dspToken,btn=document.getElementById('dspRun'),cancel=document.getElementById('dspCancel'),progress=document.getElementById('dspProgress'),state=document.getElementById('dspStatus');
+ btn.disabled=true;cancel.disabled=false;cancel.textContent='Cancelar';progress.value=0;let context;
+ try{
+  state.textContent='Decodificando audio…';
+  context=new (globalThis.AudioContext||globalThis.webkitAudioContext)();
+  const decoded=await context.decodeAudioData(await f.arrayBuffer());if(mine!==dspToken)return;
+  const sr=decoded.sampleRate,N=decoded.length,seconds=decoded.duration;
+  const left=decoded.getChannelData(0),right=decoded.getChannelData(Math.min(1,decoded.numberOfChannels-1));
+  const nfft=2048,hop=512,bins=nfft/2+1,win=new Float32Array(nfft);
+  for(let j=0;j<nfft;j++)win[j]=Math.sqrt(.5-.5*Math.cos(2*Math.PI*j/(nfft-1)));
+  const vocals=[new Float32Array(N),new Float32Array(N)],instrument=[new Float32Array(N),new Float32Array(N)];
+  const norm=new Float32Array(N),prevMask=new Float32Array(bins),history=Array.from({length:5},()=>new Float32Array(bins));
+  const frames=Math.ceil(N/hop);let histIndex=0,histCount=0;
+  const median5=(a,b,c,d,e)=>{if(a>b)[a,b]=[b,a];if(d>e)[d,e]=[e,d];if(a>c)[a,c]=[c,a];if(b>c)[b,c]=[c,b];if(a>d)[a,d]=[d,a];if(c>d)[c,d]=[d,c];if(b>e)[b,e]=[e,b];if(b>c)[b,c]=[c,b];if(d>e)[d,e]=[e,d];return c};
+  for(let frame=0;frame<frames;frame++){
+   if(mine!==dspToken)return;
+   const base=frame*hop,reL=new Float64Array(nfft),imL=new Float64Array(nfft),reR=new Float64Array(nfft),imR=new Float64Array(nfft);
+   for(let j=0;j<nfft&&base+j<N;j++){reL[j]=left[base+j]*win[j];reR[j]=right[base+j]*win[j]}
+   fft(reL,imL);fft(reR,imR);
+   const mags=new Float32Array(bins),centers=new Float32Array(bins);
+   for(let k=0;k<bins;k++){
+    const mr=(reL[k]+reR[k])*.5,mi=(imL[k]+imR[k])*.5,sdR=(reL[k]-reR[k])*.5,sdI=(imL[k]-imR[k])*.5;
+    const mid=Math.hypot(mr,mi),side=Math.hypot(sdR,sdI);
+    mags[k]=mid;centers[k]=mid/(mid+side+1e-8);
+   }
+   history[histIndex].set(mags);histIndex=(histIndex+1)%5;histCount=Math.min(5,histCount+1);
+   for(let k=0;k<bins;k++){
+    const hz=k*sr/nfft,mid=mags[k];
+    // HPSS evidence: time median for stable harmonics, frequency median for broadband transients.
+    const harmonic=histCount<5?mid:median5(history[0][k],history[1][k],history[2][k],history[3][k],history[4][k]);
+    const lo=Math.max(0,k-3),hi=Math.min(bins-1,k+3);
+    const percussive=(mags[lo]+mags[Math.min(bins-1,k-2<0?0:k-2)]+mags[k]+mags[Math.min(bins-1,k+2)]+mags[hi])/5;
+    const harmonicEvidence=harmonic/(harmonic+percussive+1e-8);
+    const band=hz<85||hz>8000?.13:hz>=170&&hz<=4200?1:.55;
+    const centerEvidence=Math.max(0,Math.min(1,(centers[k]-.28)*1.5));
+    const voiceScore=(.76*centerEvidence+.24*harmonicEvidence)*band;
+    const instScore=Math.max(.06,1-voiceScore);
+    // Wiener-type power mask with floor, plus temporal and neighboring-bin smoothing.
+    let target=(voiceScore*voiceScore)/(voiceScore*voiceScore+instScore*instScore+.0001);
+    target=Math.max(.025,Math.min(.94,target));
+    let mask=frame===0?target:.76*prevMask[k]+.24*target;
+    if(k>0)mask=.82*mask+.18*prevMask[k-1];
+    prevMask[k]=mask;
+    if(hz<95)mask*=.25;
+    for(const q of (k===0||k===nfft/2?[k]:[k,nfft-k])){reL[q]*=mask;imL[q]*=mask;reR[q]*=mask;imR[q]*=mask}
+   }
+   fft(reL,imL,true);fft(reR,imR,true);
+   for(let j=0;j<nfft&&base+j<N;j++){const w=win[j];vocals[0][base+j]+=reL[j]*w;vocals[1][base+j]+=reR[j]*w;norm[base+j]+=w*w}
+   if(frame%16===0){progress.value=Math.round(frame/frames*88);state.textContent='Separando audio · '+progress.value+'%';await dspYield()}
+  }
+  if(mine!==dspToken)return;
+  state.textContent='Reconstruyendo pistas completas…';progress.value=90;await dspYield();
+  for(let i=0;i<N;i++){
+   const d=norm[i]||1;vocals[0][i]/=d;vocals[1][i]/=d;
+   instrument[0][i]=left[i]-vocals[0][i];instrument[1][i]=right[i]-vocals[1][i];
+   if(i%262144===0){if(mine!==dspToken)return;await dspYield()}
+  }
+  if(mine!==dspToken)return;
+  state.textContent='Codificando pistas completas…';progress.value=94;await dspYield();
+  const voiceURL=URL.createObjectURL(wav(vocals,sr));if(mine!==dspToken){URL.revokeObjectURL(voiceURL);return}
+  await dspYield();const instURL=URL.createObjectURL(wav(instrument,sr));
+  if(mine!==dspToken){URL.revokeObjectURL(voiceURL);URL.revokeObjectURL(instURL);return}
+  for(const u of mdxOutputUrls)URL.revokeObjectURL(u);
+  mdxOutputUrls=[voiceURL,instURL];stopStemPlayback();enforceConsoleMute();switchConsole();
+  
+  progress.value=100;state.textContent='Listo · '+seconds.toFixed(1)+' s procesados';cancel.textContent='Deshacer';cancel.disabled=false;
+  document.getElementById('analyze').disabled=false;
+ }catch(e){if(mine===dspToken)state.textContent='Error: '+e.message}
+ finally{if(context)context.close().catch(()=>{});if(mine===dspToken){btn.disabled=false;if(cancel.textContent!=='Deshacer')cancel.disabled=true}}
+}
+
+document.getElementById('dspCancel').onclick=()=>{if(document.getElementById('dspCancel').textContent==='Deshacer'){mdxDispose();document.getElementById('dspCancel').textContent='Cancelar';document.getElementById('dspProgress').value=0;document.getElementById('analyze').disabled=!document.getElementById('file').files?.length;melodyToken++;melodyNotes=[];estimateKey([]);analysisStatus.textContent='Sin analizar';document.getElementById('cancelAnalysis').textContent='Cancelar';document.getElementById('cancelAnalysis').disabled=true;updateStemGains();switchConsole();}dspToken++;document.getElementById('dspRun').disabled=false;document.getElementById('dspCancel').disabled=true;document.getElementById('dspStatus').textContent='Cancelado'};
+
+
+document.getElementById('dspRun').onclick=()=>dspProcess();
+
+const $=id=>document.getElementById(id),audio=$('player');let url=null,stream=null,ctx=null,src=null,analyser=null,timer=null,points=[],lastPitchTime=0;let holdMs=150,zoomNotes=24,viewCenter=60,thickness=.85,dropLimit=6;const voice={active:false,lastValid:0,lastMidi:null,filtered:null,pending:null,pendingCount:0,lastDraw:0,dropCount:0,dropSince:0,releaseUntil:0,releasePitch:null};$('zoom').oninput=e=>{zoomNotes=Number(e.target.value);$('zoomValue').textContent=zoomNotes+' semitonos ('+(+(zoomNotes/12).toFixed(2))+' octava'+(zoomNotes===12?'':'s')+')'};$('hold').oninput=e=>{holdMs=Number(e.target.value);$('holdValue').textContent=holdMs+' ms'};$('thick').oninput=e=>{thickness=Number(e.target.value)/100;$('thickValue').textContent=e.target.value+'%'};$('drop').oninput=e=>{dropLimit=Number(e.target.value);$('dropValue').textContent=e.target.value+' semitonos'};const names=['C','C♯','D','D♯','E','F','F♯','G','G♯','A','A♯','B'];
+function status(t,err=false){$('status').textContent=t;$('status').className=err?'error':''}function diag(t){$('diag').textContent=t}
+let originalMp3Url=null,fullWavUrl=null,fullWavBlob=null,conversionSerial=0;
+// El archivo original es la referencia de transporte; los stems se mezclan por Web Audio.
+function choosePlaybackSource(){if(!originalMp3Url)return;const pos=Number.isFinite(audio.currentTime)?audio.currentTime:0,playing=!audio.paused;audio.pause();audio.src=originalMp3Url;audio.load();audio.addEventListener('loadedmetadata',function restore(){audio.removeEventListener('loadedmetadata',restore);if(pos>0)audio.currentTime=Math.min(pos,Math.max(0,audio.duration-.1));if(playing)audio.play().catch(()=>{})},{once:true});url=originalMp3Url;}
+$('file').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;conversionSerial++;audio.pause();stopStemPlayback();if(originalMp3Url)URL.revokeObjectURL(originalMp3Url);if(fullWavUrl)URL.revokeObjectURL(fullWavUrl);fullWavUrl=null;fullWavBlob=null;originalMp3Url=URL.createObjectURL(f);url=originalMp3Url;audio.src=url;audio.load();$('filename').textContent=f.name;status('Archivo original listo');});
+audio.addEventListener('loadedmetadata',()=>{status('Audio listo para reproducir');diag('Audio decodificable · Duración: '+audio.duration.toFixed(1)+' s')});audio.addEventListener('playing',()=>{enforceConsoleMute();status('Reproduciendo '+(processedMode()?'mezcla separada':'archivo original'))});audio.addEventListener('pause',()=>{if(audio.src&&audio.readyState>=1)status('Audio pausado')});audio.addEventListener('error',()=>{const c=audio.error?.code;status('Error al reproducir fuente '+'original (código '+c+')',true);diag('El navegador no pudo abrir o decodificar este archivo. Prueba otro archivo de audio.')});// iOS Safari puede ignorar HTMLMediaElement.volume: el control real es GainNode.
+let dryGain=null,wetGain=null,musicBus=null,processorDelay=0;let musicCtx=null,musicSource=null,musicSourceGain=null,musicGain=null,shiftNode=null,shiftAmount=0;
+let audioGraphReady=false;
+let stemEnabled=true,stemVoiceGain=1,stemInstrumentGain=1;
+function processedMode(){return stemEnabled&&mdxOutputUrls.length===2}
+// El mute nativo actúa como barrera adicional frente a salidas directas de iOS.
+// La conmutación es exclusivamente mediante GainNodes. El mute nativo
+// queda reservado al usuario y no se modifica al procesar o reproducir.
+function enforceConsoleMute(){if(musicSourceGain&&musicCtx)musicSourceGain.gain.setValueAtTime(processedMode()?0:1,musicCtx.currentTime);}
+// Consola de tres canales: original (CH1), voz (CH2) e instrumental (CH3).
+// El reproductor original es SOLO el transporte. Los tres canales comparten
+// un único AudioContext y un único bus de transposición/volumen maestro.
+// 0.2.15: ambos stems comparten un solo reloj de AudioContext.
+// No se usan dos HTMLAudioElement independientes para reproducir pistas.
+let stemBuffers=[],stemSources=[],stemGains=[],stemMixReady=false,stemGeneration=0;
+let playbackRequest=0,stemStartedAt=0,stemStartOffset=0,stemLoading=null;
+function stopActiveStems(){
+ for(const source of stemSources){try{source.onended=null;source.stop();source.disconnect()}catch(_){}}
+ stemSources=[];
+}
+function stopStemPlayback(){
+ stemGeneration++;playbackRequest++;stopActiveStems();stemLoading=null;
+ for(const gain of stemGains){try{gain.disconnect()}catch(_){}}
+ stemGains=[];stemBuffers=[];stemMixReady=false;
+ enforceConsoleMute();updateStemGains();
+}
+async function prepareStemPlayback(){
+ if(stemMixReady||!processedMode()||!musicCtx||!shiftNode)return;
+ if(stemLoading)return stemLoading;
+ const generation=stemGeneration,urls=mdxOutputUrls.slice();
+ stemLoading=(async()=>{
+  const data=await Promise.all(urls.map(async u=>{
+   const r=await fetch(u);if(!r.ok)throw Error('No se pudo leer una pista');
+   return r.arrayBuffer();
+  }));
+  if(generation!==stemGeneration)return;
+  // Se decodifican ambas pistas antes de activar el bus.
+  const buffers=await Promise.all(data.map(b=>musicCtx.decodeAudioData(b)));
+  if(generation!==stemGeneration||!processedMode())return;
+  const gains=buffers.map(()=>musicCtx.createGain());
+  for(const g of gains){g.gain.value=0;g.connect(musicBus)}
+  stemBuffers=buffers;stemGains=gains;stemMixReady=true;
+ })();
+ try{await stemLoading}finally{stemLoading=null}
+}
+function updateStemGains(){
+ enforceConsoleMute();
+ if(!musicCtx)return;
+ const now=musicCtx.currentTime,active=processedMode();
+ if(musicSourceGain)musicSourceGain.gain.setValueAtTime(active?0:1,now);
+ if(stemGains.length===2){
+  stemGains[0].gain.setTargetAtTime(active?stemVoiceGain:0,now,.004);
+  stemGains[1].gain.setTargetAtTime(active?stemInstrumentGain:0,now,.004);
+ }
+}
+function startSynchronizedStems(){
+ stopActiveStems();
+ if(!stemMixReady||!processedMode()||audio.paused)return;
+ const offset=Math.max(0,audio.currentTime);
+ const remaining=Math.min(...stemBuffers.map(b=>b.duration))-offset;
+ if(remaining<=0)return;
+ const when=musicCtx.currentTime+.035;
+ const sources=stemBuffers.map((buffer,i)=>{
+  const source=musicCtx.createBufferSource();
+  source.buffer=buffer;source.playbackRate.value=audio.playbackRate;
+  source.connect(stemGains[i]);
+  return source;
+ });
+ stemSources=sources;
+ stemStartedAt=when;stemStartOffset=offset;
+ // El mismo instante de AudioContext garantiza sincronía de muestras.
+ for(const source of sources)source.start(when,offset);
+ updateStemGains();
+}
+async function switchConsole(){
+ const request=++playbackRequest;
+ enforceConsoleMute();
+ try{
+  await setupMusic();if(request!==playbackRequest)return;
+  if(!processedMode()){stopActiveStems();updateStemGains();return}
+  await prepareStemPlayback();
+  if(request!==playbackRequest||!processedMode()||!stemMixReady)return;
+  if(audio.paused){stopActiveStems();return}
+  startSynchronizedStems();
+ }catch(e){stopActiveStems();diag('Bus de salida: '+e.message)}
+}
+function syncStems(force=false){
+ if(!stemMixReady||!processedMode()||audio.paused||!stemSources.length)return;
+ // No perseguir el reloj del elemento HTML en cada timeupdate.
+ // Solo reajustar ante saltos significativos, reiniciando AMBAS pistas juntas.
+ const expected=stemStartOffset+Math.max(0,musicCtx.currentTime-stemStartedAt)*audio.playbackRate;
+ if(force||Math.abs(expected-audio.currentTime)>.65)startSynchronizedStems();
+}
+
+function stemSamples(l,r){const mid=(l+r)*.5,side=(l-r)*.5;return [mid,side]}
+function updateStems(){
+ stemEnabled=true;
+ stemVoiceGain=Number($('stemVoice').value)/100;stemInstrumentGain=Number($('stemInstrument').value)/100;
+ $('stemVoiceValue').textContent=Math.round(stemVoiceGain*100)+'%';$('stemInstrumentValue').textContent=Math.round(stemInstrumentGain*100)+'%';
+ updateStemGains();$('stemStatus').textContent=processedMode()?'Mezcla procesada':'Archivo original';
+ // Los controles de mezcla NO invalidan el análisis ni borran el piano roll.
+}
+for(const id of ['stemEnable','stemVoice','stemInstrument'])$(id).addEventListener('input',updateStems);
+$('file').addEventListener('change',()=>{mdxDispose();$('dspRun').disabled=false;$('analyze').disabled=!$('file').files?.length;const ia=$('iaRun');if(ia)ia.disabled=!$('file').files?.length;});
+
+$('mdxVoiceReset').onclick=()=>{$('stemVoice').value=100;updateStems()};$('mdxInstReset').onclick=()=>{$('stemInstrument').value=100;updateStems()};
+function volumeValue(){return Number($('volume').value)/100}
+function applyVolume(){const v=volumeValue();if(musicGain&&musicCtx)musicGain.gain.setTargetAtTime(v,musicCtx.currentTime,.008);else audio.volume=v;}
+$('volume').addEventListener('input',applyVolume);
+function transposeLabel(){const v=shiftAmount;$('transpose').value=v;$('transposeValue').textContent=v===0?'Original · 0':(v>0?'+':'')+v+' semitono'+(Math.abs(v)===1?'':'s')}
+function setTranspose(v){shiftAmount=Math.max(-12,Math.min(12,Math.round(v)));transposeLabel();updateKeyIndicator();if($('manualKey').checked)window.pitchCoachChordHarmony?.rekey();updatePitchRoute();if(shiftNode)shiftNode.port?shiftNode.port.postMessage({semitones:shiftAmount}):shiftNode.setSemitones(shiftAmount)}
+$('transpose').addEventListener('input',e=>setTranspose(Number(e.target.value)));
+$('pitchDown').onclick=()=>setTranspose(shiftAmount-1);$('pitchUp').onclick=()=>setTranspose(shiftAmount+1);$('pitchReset').onclick=()=>setTranspose(0);
+// Procesador granular de dos cabezales con solapamiento, local y sin librerías externas.
+// Desplaza la lectura de una memoria circular; el periodo de ventana es 75 ms.
+function granularProcessor(sr){const windowSamples=Math.max(512,Math.round(sr*.075));const size=windowSamples*4;const rings=[new Float32Array(size),new Float32Array(size)];let cursor=0,phase=0,ratio=1;
+function sample(r,delay){let at=cursor-delay;while(at<0)at+=size;const a=Math.floor(at)%size,b=(a+1)%size,f=at-Math.floor(at);return r[a]*(1-f)+r[b]*f}
+return {setSemitones(s){ratio=Math.pow(2,s/12)},process(inputs,outputs){const input=inputs[0],output=outputs[0];if(!output)return;for(let i=0;i<output[0].length;i++){for(let ch=0;ch<Math.min(2,output.length);ch++)rings[ch][cursor]=input[ch]?.[i]??input[0]?.[i]??0;
+for(let ch=0;ch<output.length;ch++){if(Math.abs(ratio-1)<1e-6){output[ch][i]=input[ch]?.[i]??input[0]?.[i]??0;continue}
+// En la mitad de cada ventana, un cabezal tiene ganancia cero y puede reiniciarse.
+const p1=phase,p2=(phase+.5)%1;const d1=windowSamples*(.5+(ratio>1?1-p1:p1)),d2=windowSamples*(.5+(ratio>1?1-p2:p2));const w1=.5-.5*Math.cos(2*Math.PI*p1),w2=.5-.5*Math.cos(2*Math.PI*p2);output[ch][i]=sample(rings[Math.min(ch,1)],d1)*w1+sample(rings[Math.min(ch,1)],d2)*w2}
+phase+=(Math.abs(1-ratio)/windowSamples);if(phase>=1)phase-=Math.floor(phase);cursor=(cursor+1)%size}}
+}}
+function updatePitchRoute(){if(!dryGain||!wetGain)return;const t=musicCtx.currentTime;dryGain.gain.setValueAtTime(shiftAmount===0?1:0,t);wetGain.gain.setValueAtTime(shiftAmount===0?0:1,t)}
+async function setupMusic(){if(audioGraphReady){if(musicCtx?.state==='suspended')await musicCtx.resume();return}
+try{musicCtx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});musicSource=musicCtx.createMediaElementSource(audio);musicGain=musicCtx.createGain();
+// ScriptProcessor se mantiene como respaldo de compatibilidad para Pagira/iOS.
+const engine=granularProcessor(musicCtx.sampleRate);shiftNode=musicCtx.createScriptProcessor(1024,2,2);shiftNode.setSemitones=engine.setSemitones;shiftNode.onaudioprocess=e=>{const delay=e.playbackTime-musicCtx.currentTime;if(Number.isFinite(delay)&&delay>=0&&delay<.5)processorDelay=processorDelay?processorDelay*.9+delay*.1:delay;const ins=[e.inputBuffer.getChannelData(0),e.inputBuffer.numberOfChannels>1?e.inputBuffer.getChannelData(1):e.inputBuffer.getChannelData(0)];const outs=[e.outputBuffer.getChannelData(0),e.outputBuffer.getChannelData(1)];engine.process([ins],[outs])};
+musicSourceGain=musicCtx.createGain();musicSource.connect(musicSourceGain);musicBus=musicCtx.createGain();dryGain=musicCtx.createGain();wetGain=musicCtx.createGain();musicSourceGain.connect(musicBus);musicBus.connect(dryGain);dryGain.connect(musicGain);musicBus.connect(shiftNode);shiftNode.connect(wetGain);wetGain.connect(musicGain);updatePitchRoute();musicGain.connect(musicCtx.destination);audioGraphReady=true;engine.setSemitones(shiftAmount);updateStemGains();applyVolume();await musicCtx.resume();($('pitchInfo')||{set textContent(v){}}).textContent='Transposición local activa. No altera el control de velocidad. Calidad experimental.';
+}catch(e){diag('Procesamiento del reproductor: '+e.name+' · '+e.message);($('pitchInfo')||{set textContent(v){}}).textContent='No se pudo iniciar el motor de tono/volumen en este navegador: '+e.message;}}
+// La reproducción es el gesto de usuario que autoriza activar AudioContext en iOS.
+audio.addEventListener('play',()=>{enforceConsoleMute();switchConsole()});
+audio.addEventListener('pause',()=>{playbackRequest++;stopActiveStems()});
+audio.addEventListener('seeked',()=>{if(processedMode()&&!audio.paused){if(stemMixReady)startSynchronizedStems();else switchConsole()}});
+audio.addEventListener('ratechange',()=>{if(processedMode()&&!audio.paused){if(stemMixReady)startSynchronizedStems();else switchConsole()}});
+audio.addEventListener('timeupdate',()=>{if(processedMode()&&!audio.paused)syncStems()});
+audio.addEventListener('ended',()=>{playbackRequest++;stopActiveStems()});
+
+applyVolume();transposeLabel();
+function detect(x,sr){const n=x.length;let mean=0;for(let i=0;i<n;i++)mean+=x[i];mean/=n;let rms=0;for(let i=0;i<n;i++){const a=x[i]-mean;rms+=a*a}rms=Math.sqrt(rms/n);if(rms<.0035)return null;const min=Math.max(2,Math.floor(sr/1000)),max=Math.min(Math.floor(sr/75),Math.floor(n*.43)),count=n-max;let sum=0,chosen=-1,best=1;const d=new Float32Array(max+1);for(let t=1;t<=max;t++){let s=0;for(let i=0;i<count;i++){const z=x[i]-x[i+t];s+=z*z}sum+=s;d[t]=s*t/(sum||1);}for(let t=min+1;t<max;t++){if(d[t]<=d[t-1]&&d[t]<=d[t+1]&&d[t]<best){best=d[t];chosen=t;if(best<.12)break}}if(chosen<1||best>.22)return null;const a=d[chosen-1]??d[chosen],b=d[chosen],c=d[chosen+1]??d[chosen],den=a-2*b+c,delta=Math.abs(den)>1e-9?Math.max(-1,Math.min(1,.5*(a-c)/den)):0;const f=sr/(chosen+delta);return f>=75&&f<=1000?{f,confidence:1-best}:null}
+function displayPitch(midi,confidence,held=false){const m=Math.round(midi),c=(midi-m)*100;$('note').textContent=names[(m%12+12)%12]+(Math.floor(m/12)-1);$('cents').textContent=Math.abs(c)<5?'<5 cents':(c>=0?'+':'')+c.toFixed(1)+' cents';$('cents').style.color=held?'#9bb7c3':Math.abs(c)<5?'#65d8a9':Math.abs(c)<20?'#e7c667':'#ff9b88';$('confidence').textContent=held?'Retenida':Math.round(confidence*100)+'%';$('voiceState').textContent=held?'Sosteniendo': 'Cantando'}
+function clearPitch(){for(const id of ['note','cents','confidence'])$(id).textContent='—';$('voiceState').textContent='Silencio'}
+function resetVoice(){voice.active=false;voice.lastValid=0;voice.lastMidi=null;voice.filtered=null;voice.pending=null;voice.pendingCount=0;voice.lastDraw=0;voice.dropCount=0;voice.dropSince=0;voice.releaseUntil=0;voice.releasePitch=null;points=[];clearPitch()}
+// El detector produce observaciones. Este controlador convierte observaciones en eventos de nota.
+function endNote(time){
+  if(!voice.active)return;
+  points.push({time:Math.max(voice.lastValid,time),midi:voice.lastMidi,event:'end'});
+  voice.active=false;voice.filtered=null;voice.pending=null;voice.pendingCount=0;
+  voice.dropCount=0;voice.dropSince=0;clearPitch();
+}
+function observe(r,now=performance.now()){
+  const valid=!!(r&&Number.isFinite(r.f)&&r.confidence>=.78);
+  if(valid){
+    const raw=69+12*Math.log2(r.f/440);
+    // Tras una caída de liberación, no dibujar inmediatamente el ruido grave residual.
+    if(now<voice.releaseUntil){
+      if(voice.releasePitch!==null&&raw<voice.releasePitch-dropLimit/2){clearPitch();return}
+      voice.releaseUntil=0;
+    }
+    if(!voice.active){
+      voice.active=true;voice.filtered=raw;voice.pending=null;voice.pendingCount=0;
+      voice.dropCount=0;voice.lastMidi=raw;points.push({time:now,midi:raw,event:'start'});
+    }else{
+      const fall=voice.filtered-raw;
+      if(fall>=dropLimit){
+        // Dos lecturas seguidas (~60 ms) confirman el descenso y evitan cortar por un fallo aislado.
+        voice.dropCount++;
+        if(voice.dropCount===1)voice.dropSince=now;
+        if(voice.dropCount>=2){
+          const old=voice.lastMidi;
+          endNote(voice.lastValid);
+          voice.releasePitch=old;voice.releaseUntil=now+160;
+          return;
+        }
+        // Congelar el indicador mientras se confirma: nunca dibujar la caída sospechosa.
+        if(now-voice.lastDraw>=25){points.push({time:now,midi:voice.lastMidi,event:'hold'});voice.lastDraw=now}
+        displayPitch(voice.lastMidi,0,true);return;
+      }
+      voice.dropCount=0;
+      const jump=Math.abs(raw-voice.filtered);
+      if(jump>7){
+        if(voice.pending!==null&&Math.abs(raw-voice.pending)<1.5)voice.pendingCount++;
+        else{voice.pending=raw;voice.pendingCount=1}
+        if(voice.pendingCount>=2){voice.filtered=raw;voice.pending=null;voice.pendingCount=0}
+      }else{
+        voice.pending=null;voice.pendingCount=0;
+        const alpha=jump>1.1?.78:jump>.35?.55:.34;
+        voice.filtered+=alpha*(raw-voice.filtered);
+      }
+    }
+    voice.lastValid=now;voice.lastMidi=voice.filtered;
+    points.push({time:now,midi:voice.filtered,event:'continue'});
+    displayPitch(voice.filtered,r.confidence,false);
+  }else if(voice.active){
+    voice.dropCount=0;
+    if(now-voice.lastValid<=holdMs){
+      if(now-voice.lastDraw>=25){points.push({time:now,midi:voice.lastMidi,event:'hold'});voice.lastDraw=now}
+      displayPitch(voice.lastMidi,0,true);
+    }else endNote(voice.lastValid+holdMs);
+  }else clearPitch();
+}
+async function stop(){if(timer){clearInterval(timer);timer=null}stream?.getTracks().forEach(t=>t.stop());stream=null;try{src?.disconnect();if(ctx&&ctx.state!=='closed')await ctx.close()}catch{}ctx=null;src=null;analyser=null;$('mic').textContent='🎤 Activar micrófono';resetVoice();diag('Micrófono detenido')}
+async function start(){try{if(!navigator.mediaDevices?.getUserMedia)throw Error('El navegador bloquea el micrófono en este origen. Usa HTTPS o localhost; en iPhone no basta abrir el HTML desde Archivos.');stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:{ideal:1},echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});await ctx.resume();src=ctx.createMediaStreamSource(stream);analyser=ctx.createAnalyser();analyser.fftSize=4096;analyser.smoothingTimeConstant=0;const hp=ctx.createBiquadFilter(),lp=ctx.createBiquadFilter();hp.type="highpass";hp.frequency.value=65;hp.Q.value=.707;lp.type="lowpass";lp.frequency.value=1800;lp.Q.value=.707;src.connect(hp);hp.connect(lp);lp.connect(analyser);const data=new Float32Array(analyser.fftSize);resetVoice();let busy=false;timer=setInterval(()=>{if(busy||!analyser)return;busy=true;try{analyser.getFloatTimeDomainData(data);observe(detect(data,ctx.sampleRate));lastPitchTime=performance.now()}catch(e){diag('Error de análisis: '+e.message)}finally{busy=false}},30);$('mic').textContent='⏹ Desactivar micrófono';status('Micrófono activo');diag('Micrófono activo · '+ctx.sampleRate+' Hz · AnalyserNode. La latencia total y precisión todavía no están verificadas.')}catch(e){status('No se pudo activar el micrófono',true);diag(e.name+': '+e.message);await stop();diag(e.name+': '+e.message)}}
+$('mic').onclick=()=>stream?stop():start();
+
+// Análisis de referencia local: estimación armónica monofónica de mezcla completa.
+// No pretende ser separación neuronal. Trabaja por bloques y permite cancelar.
+let melodyNotes=[],melodyToken=0,melodyFile=null;
+let detectedKey=null;
+function effectiveKey(){return $('manualKey').checked?{root:(+$('manualRoot').value-shiftAmount+120)%12,mode:$('manualMode').value}:detectedKey;}
+const scaleIntervals={
+ major:[0,2,4,5,7,9,11],minor:[0,2,3,5,7,8,10],
+ harmonic:[0,2,3,5,7,8,11],melodic:[0,2,3,5,7,9,11],
+ pentatonic:[0,2,4,7,9]
+};
+function estimateKey(notes){
+ if(!notes.length){detectedKey=null;updateKeyIndicator();return}
+ const hist=Array(12).fill(0);
+ for(const n of notes)hist[((Math.round(n.midi)%12)+12)%12]+=Math.min(3,n.end-n.start);
+ let best=null;
+ for(let root=0;root<12;root++)for(const mode of ['major','minor']){
+  const intervals=scaleIntervals[mode],inside=hist.reduce((a,v,i)=>a+(intervals.includes((i-root+12)%12)?v:-v*.8),0);
+  const score=inside+hist[root]*.25+hist[(root+7)%12]*.08;
+  if(!best||score>best.score)best={root,mode,score};
+ }
+ detectedKey=best;if(!$('manualKey').checked)$('scaleType').value=best.mode==='major'?'major':'minor';updateKeyIndicator();
+}
+function updateKeyIndicator(){
+ const el=$('keyIndicator');if(!el)return;
+ const key=effectiveKey();el.textContent=key?($('manualKey').checked?'Tonalidad manual: ':'Tonalidad estimada: ')+names[(key.root+shiftAmount+120)%12]+' '+(key.mode==='major'?'mayor':'menor'):'Tonalidad: por detectar';
+}
+for(const id of ['manualRoot','manualMode','manualKey'])$(id).addEventListener('change',()=>{if($('manualKey').checked)$('scaleType').value=$('manualMode').value;else if(detectedKey)$('scaleType').value=detectedKey.mode;updateKeyIndicator();if(!window.pitchCoachHarmony?.keySig?.startsWith("chord:"))window.pitchCoachHarmonyClear?.();window.pitchCoachChordHarmony?.rekey();window.pitchCoachHarmonyRefresh?.();});
+$('scaleHighlight').addEventListener('input',e=>$('scaleHighlightValue').textContent=e.target.value+'%');
+
+
+// Opciones de visualización independientes del reproductor y del DSP.
+(function(){
+ const engine=$('recognitionEngine'),settings=$('smartEqSettings');
+ function syncEq(){settings.hidden=engine.value!=='crepevoice'}
+ engine.addEventListener('change',syncEq);syncEq();
+ const low=$('eqLow'),high=$('eqHigh'),ls=$('eqLowSlider'),hs=$('eqHighSlider'),selected=$('eqSelected'),rangeLabel=$('eqRangeLabel');
+ const toPosition=hz=>Math.log(Math.max(80,Math.min(10000,hz))/80)/Math.log(10000/80)*1000;
+ const toFrequency=position=>80*Math.pow(10000/80,position/1000);
+ const fmt=hz=>hz>=1000?(+(hz/1000).toFixed(2))+' kHz':Math.round(hz)+' Hz';
+ function syncRange(which){let a=Number(ls.value),b=Number(hs.value);if(a>b-12){if(which==='low')a=b-12;else b=a+12}a=Math.max(0,a);b=Math.min(1000,b);ls.value=a;hs.value=b;low.value=Math.abs(toFrequency(a)-300)<1?300:Math.round(toFrequency(a));high.value=Math.abs(toFrequency(b)-1200)<4?1200:Math.round(toFrequency(b));selected.style.left=(a/10)+'%';selected.style.width=((b-a)/10)+'%';rangeLabel.textContent=fmt(Number(low.value))+' – '+fmt(Number(high.value));}
+ ls.value=toPosition(300);hs.value=toPosition(1200);syncRange();
+ ls.addEventListener('input',()=>syncRange('low'));hs.addEventListener('input',()=>syncRange('high'));
+ const shell=$('rollShell'),btn=$('rollFullscreen'),zoomFull=$('zoomFull'),zoom=$('zoom');
+ const player=$('player'),playerHome=document.createComment('player-home');player.parentNode.insertBefore(playerHome,player);
+ const playerHolder=document.createElement('div');playerHolder.id='rollFullPlayer';shell.insertBefore(playerHolder,shell.firstChild);
+ function relocatePlayer(){if(isFull()){if(player.parentNode!==playerHolder)playerHolder.appendChild(player)}else if(player.parentNode===playerHolder){playerHome.parentNode.insertBefore(player,playerHome.nextSibling)}}
+ function isFull(){return document.fullscreenElement===shell||document.webkitFullscreenElement===shell||shell.classList.contains('roll-full-fallback')}
+ function syncFull(){relocatePlayer();btn.textContent=isFull()?'⤢':'⛶';btn.title=isFull()?'Salir de pantalla completa':'Pantalla completa';btn.setAttribute('aria-label',btn.title)}
+ async function toggleFull(){if(isFull()){if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen();else if(document.webkitFullscreenElement&&document.webkitExitFullscreen)document.webkitExitFullscreen();shell.classList.remove('roll-full-fallback')}else{try{if(shell.requestFullscreen)await shell.requestFullscreen();else if(shell.webkitRequestFullscreen)await shell.webkitRequestFullscreen();else shell.classList.add('roll-full-fallback')}catch(e){shell.classList.add('roll-full-fallback')}}syncFull()}
+ btn.addEventListener('click',toggleFull);document.addEventListener('fullscreenchange',syncFull);document.addEventListener('webkitfullscreenchange',syncFull);
+ zoomFull.addEventListener('input',()=>{zoom.value=zoomFull.value;zoom.dispatchEvent(new Event('input',{bubbles:true}));$('zoomFullValue').textContent=zoom.value});
+ zoom.addEventListener('input',()=>{zoomFull.value=zoom.value;$('zoomFullValue').textContent=zoom.value});
+})();
+
+const analysisStatus=$('analysisStatus');
+$('file').addEventListener('change',()=>{melodyToken++;melodyNotes=[];estimateKey([]);melodyFile=$('file').files?.[0]||null;analysisStatus.textContent='Sin analizar';$('cancelAnalysis').disabled=true;$('cancelAnalysis').textContent='Cancelar'});
+$('cancelAnalysis').onclick=()=>{const undo=$('cancelAnalysis').textContent==='Deshacer';melodyToken++;melodyNotes=[];estimateKey([]);analysisStatus.textContent=undo?'Melodía eliminada':'Análisis cancelado';$('analyze').disabled=false;if($('cancelAnalysis').textContent!=='Deshacer')$('cancelAnalysis').disabled=true;$('cancelAnalysis').textContent='Cancelar'};
+const sleepFrame=()=>new Promise(resolve=>setTimeout(resolve,0));
+function fftPower(data){
+  const n=data.length,real=new Float32Array(n),imag=new Float32Array(n);
+  // Ventana Hann invariable: calcular una sola vez, no miles de cosenos por análisis.
+  let window=fftPower._window;
+  if(!window||window.length!==n){window=new Float32Array(n);for(let i=0;i<n;i++)window[i]=.5-.5*Math.cos(2*Math.PI*i/(n-1));fftPower._window=window;}
+  for(let i=0;i<n;i++)real[i]=data[i]*window[i];
+  for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let t=real[i];real[i]=real[j];real[j]=t}}
+  for(let len=2;len<=n;len<<=1){const a=-2*Math.PI/len,cr=Math.cos(a),ci=Math.sin(a);
+    for(let i=0;i<n;i+=len){let wr=1,wi=0;for(let j=0;j<len/2;j++){const u=i+j,v=u+len/2,tr=real[v]*wr-imag[v]*wi,ti=real[v]*wi+imag[v]*wr;real[v]=real[u]-tr;imag[v]=imag[u]-ti;real[u]+=tr;imag[u]+=ti;const nr=wr*cr-wi*ci;wi=wr*ci+wi*cr;wr=nr}}}
+  const p=new Float32Array(n/2);for(let i=0;i<p.length;i++)p[i]=real[i]*real[i]+imag[i]*imag[i];return p;
+}
+// Saliencia armónica espectral: devuelve candidatos con puntuación relativa.
+function harmonicCandidates(p,sr,n,prev){
+ const binHz=sr/n,energy=f=>{const k=Math.round(f/binHz);if(k<2||k>=p.length-2)return 0;return Math.max(p[k-1],p[k],p[k+1])};
+ let peak=0;for(let k=Math.max(2,Math.floor(90/binHz));k<Math.min(p.length,Math.ceil(3200/binHz));k++)peak=Math.max(peak,p[k]);
+ if(peak<1e-7)return [];
+ const list=[];
+ for(let m=43;m<=84;m+=.5){const f=440*Math.pow(2,(m-69)/12);let sum=0;
+  for(let h=1;h<=Math.min(8,Math.floor(3500/f));h++)sum+=Math.sqrt(energy(f*h))/Math.pow(h,.9);
+  const score=sum+.4*Math.sqrt(energy(f));list.push({m,score});}
+ list.sort((a,b)=>b.score-a.score);return list.slice(0,6).filter(x=>x.score>Math.sqrt(peak)*.62);
+}
+// YIN: función de diferencia normalizada; procesamos audio submuestreado para iOS.
+function yinCandidates(samples,sr){
+ const n=samples.length, minTau=Math.max(2,Math.floor(sr/1000)),maxTau=Math.min(Math.floor(sr/75),Math.floor(n*.45));
+ let rms=0;for(let i=0;i<n;i++)rms+=samples[i]*samples[i];if(Math.sqrt(rms/n)<.009)return [];
+ const dif=new Float32Array(maxTau+1),cmnd=new Float32Array(maxTau+1);let accum=0;
+ const usable=n-maxTau;
+ for(let tau=1;tau<=maxTau;tau++){
+  let d=0;for(let i=0;i<usable;i++){const v=samples[i]-samples[i+tau];d+=v*v}
+  dif[tau]=d;accum+=d;cmnd[tau]=d*tau/(accum+1e-12);
+ }
+ const peaks=[];
+ for(let t=minTau+1;t<maxTau-1;t++)if(cmnd[t]<=cmnd[t-1]&&cmnd[t]<cmnd[t+1]&&cmnd[t]<.32){
+  const a=cmnd[t-1],b=cmnd[t],c=cmnd[t+1],den=a-2*b+c;
+  const delta=Math.abs(den)>1e-9?Math.max(-1,Math.min(1,.5*(a-c)/den)):0;
+  const freq=sr/(t+delta);if(freq>=75&&freq<=1000)peaks.push({m:69+12*Math.log2(freq/440),confidence:Math.max(0,1-b)});
+ }
+ return peaks.sort((a,b)=>b.confidence-a.confidence).slice(0,6);
+}
+// Candidatos acústicos: YIN + saliencia + comprobación de subarmónicos.
+function melodyCandidates(p,sr,n,yin){
+ const spectral=harmonicCandidates(p,sr,n),norm=spectral[0]?.score||1;
+ const proposals=[];
+ for(const v of yin)proposals.push(v.m,v.m-12,v.m+12);
+ for(const v of spectral.slice(0,5))proposals.push(v.m,v.m-12);
+ const out=[];
+ for(const m of proposals){
+  if(m<43||m>84||out.some(v=>Math.abs(v.m-m)<.4))continue;
+  const harmonic=spectral.reduce((best,x)=>Math.max(best,x.score/norm*Math.exp(-Math.pow((x.m-m)/.95,2))),0);
+  const periodic=yin.reduce((best,x)=>Math.max(best,x.confidence*Math.exp(-Math.pow((x.m-m)/.7,2))),0);
+  // El candidato subarmónico necesita apoyo real de YIN o de la serie armónica.
+  const score=.46*harmonic+.54*periodic;
+  if(score>.22)out.push({m,score:Math.min(1,score)});
+ }
+ out.sort((a,b)=>b.score-a.score);
+ return out.slice(0,5);
+}
+// Viterbi en bloques con solapamiento lógico: el estado silencioso evita notas falsas.
+function viterbiMelody(lattice){
+ const out=new Array(lattice.length).fill(null),blockSize=800;
+ let corrections=0,confSum=0,voiced=0;
+ for(let begin=0;begin<lattice.length;begin+=blockSize){
+  const end=Math.min(lattice.length,begin+blockSize),states=[],back=[];
+  for(let t=begin;t<end;t++){
+   const candidates=[{m:null,score:lattice[t].length?.18:.65},...lattice[t]];
+   const values=new Float64Array(candidates.length),prevs=new Int16Array(candidates.length);
+   for(let j=0;j<candidates.length;j++){
+    const c=candidates[j],emission=Math.log(Math.max(.001,c.score));
+    if(t===begin){values[j]=emission;prevs[j]=-1;continue}
+    let best=-Infinity,bi=0;
+    for(let k=0;k<states[states.length-1].candidates.length;k++){
+     const old=states[states.length-1].candidates[k],dist=c.m==null||old.m==null?0:Math.abs(c.m-old.m);
+     const penalty=c.m==null&&old.m==null?0:c.m==null||old.m==null?.48:dist<.65?0:dist<2.5?.14:dist<5?.4:dist<9?.8:dist<14?1.3:2.1;
+     const score=states[states.length-1].values[k]-penalty;
+     if(score>best){best=score;bi=k}
+    }
+    values[j]=emission+best;prevs[j]=bi;
+   }
+   states.push({candidates,values});back.push(prevs);
+  }
+  if(!states.length)continue;
+  const last=states[states.length-1].values;let idx=0;
+  for(let j=1;j<last.length;j++)if(last[j]>last[idx])idx=j;
+  for(let i=states.length-1;i>=0;i--){
+   const c=states[i].candidates[idx];out[begin+i]=c.m;
+   if(c.m!=null){voiced++;confSum+=c.score;const local=lattice[begin+i][0];if(local&&Math.abs(local.m-c.m)>6)corrections++}
+   idx=back[i][idx];if(idx<0)break;
+  }
+ }
+ return {frames:out,corrections,confidence:voiced?confSum/voiced:0,voiced};
+}
+function stabilizeMelody(frames){
+ const out=frames.slice();
+ for(let i=1;i<out.length-1;i++){
+  if(out[i]==null){if(out[i-1]!=null&&out[i+1]!=null&&Math.abs(out[i-1]-out[i+1])<.9)out[i]=(out[i-1]+out[i+1])/2;continue}
+  if(out[i-1]!=null&&out[i+1]!=null){
+   const mid=(out[i-1]+out[i+1])/2;
+   if(Math.abs(out[i]-mid)>7&&Math.abs(out[i-1]-out[i+1])<2){
+    const delta=out[i]-mid;
+    if(Math.abs(Math.abs(delta)-12)<2)out[i]-=12*Math.sign(delta);
+    else out[i]=null;
+   }
+  }
+ }
+ return out;
+}
+function melodySegments(frames,hopSeconds){
+  const notes=[];let start=-1,last=-1,values=[];
+  function flush(){if(start<0)return;const dur=(last-start+1)*hopSeconds;if(dur>=.13&&values.length>=2){const sorted=values.slice().sort((a,b)=>a-b),median=sorted[Math.floor(sorted.length/2)];notes.push({start:start*hopSeconds,end:(last+1)*hopSeconds,midi:median})}start=-1;values=[]}
+  for(let i=0;i<frames.length;i++){
+    const m=frames[i];
+    if(m==null){flush();continue}
+    if(start<0){start=i;last=i;values=[m];continue}
+    const avg=values.slice(-5).reduce((a,b)=>a+b,0)/Math.min(5,values.length);
+    if(Math.abs(m-avg)>1.7){flush();start=i;values=[m]}else values.push(m);
+    last=i;
+  }
+  flush();
+  return notes;
+}
+
+
+// Basic Pitch trabaja sobre el mismo origen elegido por el detector nativo:
+// pista de voz procesada, o archivo original cuando no hay separación.
+async function analyzeBasicPitch(token,fromMdx,f,returnOnly=false){
+ const status=analysisStatus;
+ const bytes=fromMdx?await(await fetch(mdxOutputUrls[0])).arrayBuffer():await f.arrayBuffer();
+ if(token!==melodyToken)return;
+ status.textContent='Basic Pitch: decodificando fuente…';await sleepFrame();
+ const ctx=new (window.AudioContext||window.webkitAudioContext)();
+ let decoded;
+ try{decoded=await ctx.decodeAudioData(bytes)}finally{await ctx.close()}
+ if(token!==melodyToken)return;
+ // Basic Pitch espera mono a 22050 Hz; remuestrear por OfflineAudioContext.
+ status.textContent='Basic Pitch: convirtiendo a mono 22050 Hz…';await sleepFrame();
+ const duration=decoded.duration;
+ const offline=new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(1,Math.ceil(duration*22050),22050);
+ const source=offline.createBufferSource();source.buffer=decoded;
+ const merger=offline.createGain();merger.gain.value=1/decoded.numberOfChannels;
+ // Mezcla mono explícita de todos los canales.
+ const splitter=offline.createChannelSplitter(decoded.numberOfChannels);
+ source.connect(splitter);
+ for(let c=0;c<decoded.numberOfChannels;c++)splitter.connect(merger,c,0);
+ merger.connect(offline.destination);source.start(0);
+ const mono=(await offline.startRendering()).getChannelData(0);
+ if(token!==melodyToken)return;
+ status.textContent='Basic Pitch: importando biblioteca…';await sleepFrame();
+ const lib=await import('https://esm.sh/@spotify/basic-pitch@1.0.1?bundle');
+ if(token!==melodyToken)return;
+ const modelURL='https://cdn.jsdelivr.net/npm/@spotify/basic-pitch@1.0.1/model/model.json';
+ status.textContent='Basic Pitch: cargando modelo (red o caché)…';await sleepFrame();
+ if(!window.__pitchCoachBasicPitch)window.__pitchCoachBasicPitch=new lib.BasicPitch(modelURL);
+ const engine=window.__pitchCoachBasicPitch;
+ const chunks=[];
+ let totalRaw=0,totalTimed=0,discarded=0,sampleKeys="";
+ status.textContent='Basic Pitch: analizando audio ('+duration.toFixed(1)+' s)…';await sleepFrame();
+ // evaluateModel puede emitir varios lotes: conservar TODOS los fotogramas.
+ // No modificar la conversión ni el análisis del detector nativo.
+ const allFrames=[],allOnsets=[],allContours=[];
+ let batches=0;
+ await engine.evaluateModel(mono,(f,o,c)=>{
+   if(token!==melodyToken)return;
+   if(Array.isArray(f))allFrames.push(...f);
+   if(Array.isArray(o))allOnsets.push(...o);
+   if(Array.isArray(c))allContours.push(...c);
+   batches++;
+ },(progress)=>{
+   if(token===melodyToken&&Number.isFinite(progress))
+     status.textContent='Basic Pitch: audio · '+Math.round(progress*100)+' %';
+ });
+ if(token!==melodyToken)return;
+ if(!allFrames.length||!allOnsets.length)throw Error('El modelo no devolvió fotogramas de notas · lotes '+batches);
+ const frames=allFrames,onsets=allOnsets,contours=allContours;
+ // Adaptador exclusivo de Basic Pitch. No modifica el detector ni el adaptador nativo.
+ // Umbrales experimentales orientados a recuperar eventos suaves y sostenidos.
+ const rawNotes=lib.outputToNotesPoly(frames,onsets,0.30,0.20,3);
+ const timedNotes=lib.noteFramesToTime(rawNotes);
+ if(!Array.isArray(timedNotes))throw Error('Basic Pitch: salida de notas inesperada');
+ totalRaw=rawNotes.length;
+ totalTimed=timedNotes.length;
+ if(timedNotes.length)sampleKeys=Object.keys(timedNotes[0]).join(', ');
+ for(const n of timedNotes){
+   const midi=Number(n.pitchMidi??n.pitch_midi??n.midi??n.pitch);
+   const begin=Number(n.startTimeSeconds??n.startTime??n.start_time??n.start);
+   const noteDuration=Number(n.durationSeconds??n.duration);
+   const end=(n.endTimeSeconds!=null||n.endTime!=null||n.end_time!=null||n.end!=null)
+     ? Number(n.endTimeSeconds??n.endTime??n.end_time??n.end)
+     : begin+noteDuration;
+   if(Number.isFinite(midi)&&Number.isFinite(begin)&&Number.isFinite(end)&&end>begin){
+     chunks.push({midi,start:begin,end,confidence:Number(n.amplitude??n.velocity??0.5)});
+   }else discarded++;
+ }
+ status.textContent='Basic Pitch: '+totalRaw+' eventos brutos · '+chunks.length+' convertidos · '+discarded+' descartados';
+ await sleepFrame();
+ if(token!==melodyToken)return;
+ if(returnOnly)return chunks.sort((a,b)=>a.start-b.start);
+ melodyNotes=chunks.sort((a,b)=>a.start-b.start);
+ estimateKey(melodyNotes);
+ $('cancelAnalysis').textContent='Deshacer';
+ status.textContent='Basic Pitch: '+melodyNotes.length+' notas · lotes '+batches+' · fotogramas '+allFrames.length+' · salida '+totalTimed+' · descartadas '+discarded+(sampleKeys?' · campos: '+sampleKeys:'')+' (mezcla incluye instrumentos).';
+}
+
+
+// Rama experimental: CREPE TF.js, inferencia sobre audio de archivo, sin micrófono.
+// Modelo CREPE ml5 alojado públicamente; la carga depende de conectividad/CORS de SiteCase.
+// Persistencia adicional: Origin Private File System (OPFS), independiente de IndexedDB.
+// Algunos visores file:// no ofrecen un origen persistente: en ese caso se conserva el fallback.
+const CREPE_STORE='pitch-coach-crepe-v2';
+async function crepeOPFSRead(tf){
+ if(!navigator.storage?.getDirectory)return null;
+ const dir=await navigator.storage.getDirectory();
+ const meta=JSON.parse(await(await dir.getFileHandle(CREPE_STORE+'.json')).getFile().then(f=>f.text()));
+ const bytes=await(await dir.getFileHandle(CREPE_STORE+'.bin')).getFile().then(f=>f.arrayBuffer());
+ if(bytes.byteLength!==meta.bytes)throw Error('Modelo local incompleto');
+ const handler={load:async()=>({modelTopology:meta.modelTopology,weightSpecs:meta.weightSpecs,weightData:bytes,format:'layers-model'})};
+ return await tf.loadLayersModel(handler);
+}
+async function crepeOPFSWrite(artifacts){
+ if(!navigator.storage?.getDirectory)return false;
+ const dir=await navigator.storage.getDirectory();
+ const bin=await dir.getFileHandle(CREPE_STORE+'.bin',{create:true});
+ const bw=await bin.createWritable();await bw.write(artifacts.weightData);await bw.close();
+ const meta={modelTopology:artifacts.modelTopology,weightSpecs:artifacts.weightSpecs,bytes:artifacts.weightData.byteLength};
+ const mf=await dir.getFileHandle(CREPE_STORE+'.json',{create:true});
+ const mw=await mf.createWritable();await mw.write(JSON.stringify(meta));await mw.close();
+ return true;
+}
+// Detector rítmico conservador: identifica nuevos ataques por caída y recuperación
+// de energía, sin cuantizar la canción ni imponer un tempo artificial.
+function extractVocalAttacks(samples,sr=16000){
+ const hop=160,win=320,env=[];
+ for(let p=0;p+win<samples.length;p+=hop){
+   let sum=0;for(let j=0;j<win;j++)sum+=samples[p+j]*samples[p+j];
+   env.push(Math.sqrt(sum/win));
+ }
+ const smooth=env.map((_,i)=>{
+   let v=0,n=0;for(let k=Math.max(0,i-2);k<=Math.min(env.length-1,i+2);k++){v+=env[k];n++}return v/n;
+ });
+ const attacks=[];
+ for(let i=8;i<smooth.length-8;i++){
+   const before=Math.max(...smooth.slice(i-8,i-2));
+   const valley=Math.min(...smooth.slice(i-3,i+2));
+   const after=Math.max(...smooth.slice(i+2,i+8));
+   if(after>0.009&&valley<before*0.73&&after>valley*1.7&&smooth[i+3]>smooth[i-2]*1.25){
+     const t=(i+2)*hop/sr;
+     if(!attacks.length||t-attacks[attacks.length-1]>0.115)attacks.push(t);
+   }
+ }
+ return attacks;
+}
+function refineVocalRhythm(notes,attacks){
+ const result=[];let splitCount=0;
+ for(const n of notes){
+   const inside=attacks.filter(t=>t>n.start+0.16&&t<n.end-0.13);
+   let start=n.start;
+   for(const t of inside){
+     if(t-start<0.14)continue;
+     result.push({...n,start,end:t});start=t;splitCount++;
+   }
+   if(n.end-start>=0.10)result.push({...n,start,end:n.end});
+ }
+ return {notes:result,splitCount};
+}
+async function analyzeCrepeMelody(token,fromMdx,f,telephoneEQ=false,sharedDecoded=null){
+ const bytes=sharedDecoded?null:(fromMdx?await(await fetch(mdxOutputUrls[0])).arrayBuffer():await f.arrayBuffer());
+ if(token!==melodyToken)return null;
+ analysisStatus.textContent='CREPE: decodificando canción…';await sleepFrame();
+ let decoded=sharedDecoded;
+ if(!decoded){const ctx=new (window.AudioContext||window.webkitAudioContext)();try{decoded=await ctx.decodeAudioData(bytes)}finally{await ctx.close()}}
+ if(token!==melodyToken)return null;
+ const sampleRate=16000;
+ const offline=new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(1,Math.ceil(decoded.duration*sampleRate),sampleRate);
+ const src=offline.createBufferSource();src.buffer=decoded;
+ const split=offline.createChannelSplitter(decoded.numberOfChannels);
+ const gain=offline.createGain();gain.gain.value=1/decoded.numberOfChannels;
+ src.connect(split);
+ for(let i=0;i<decoded.numberOfChannels;i++)split.connect(gain,i,0);
+ if(telephoneEQ){
+   // Cadena offline aislada: HP 300 Hz + LP 3400 Hz.
+   // No toca el elemento <audio>, ni el grafo de reproducción VocalDSP.
+   const hp=offline.createBiquadFilter();hp.type='highpass';hp.frequency.value=Number($('eqLow').value);hp.Q.value=Math.SQRT1_2;
+   const lp=offline.createBiquadFilter();lp.type='lowpass';lp.frequency.value=Number($('eqHigh').value);lp.Q.value=Math.SQRT1_2;
+   gain.connect(hp);hp.connect(lp);lp.connect(offline.destination);
+ }else gain.connect(offline.destination);
+ src.start(0);
+ analysisStatus.textContent='CREPE: convirtiendo a mono 16 kHz…';await sleepFrame();
+ const samples=(await offline.startRendering()).getChannelData(0);
+ if(token!==melodyToken)return null;
+ if(!window.tf){
+   analysisStatus.textContent='CREPE: cargando TensorFlow.js…';await sleepFrame();
+   await new Promise((resolve,reject)=>{
+     const tag=document.createElement('script');
+     tag.src='https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js';
+     tag.onload=resolve;tag.onerror=()=>reject(Error('No se pudo cargar TensorFlow.js; comprueba conexión de SiteCase'));
+     document.head.appendChild(tag);
+   });
+ }
+ const tf=window.tf;
+ if(!window.__pitchCoachCrepe&&window.pcSessionCrepe){window.__pitchCoachCrepe=await tf.loadLayersModel({load:async()=>window.pcSessionCrepe});}
+ if(!window.__pitchCoachCrepe){
+   try{analysisStatus.textContent='CREPE: buscando modelo persistente…';await sleepFrame();window.__pitchCoachCrepe=await crepeOPFSRead(tf)}catch(_){/* OPFS no disponible o aún no guardado */}
+ }
+ if(!window.__pitchCoachCrepe){
+   // Reutilización persistente opcional si SiteCase habilita IndexedDB en file://.
+   if(tf.io&&tf.io.browserIndexedDB&&typeof indexedDB!=='undefined'){
+     try{
+       analysisStatus.textContent='CREPE: buscando modelo guardado…';await sleepFrame();
+       window.__pitchCoachCrepe=await tf.loadLayersModel('indexeddb://pitch-coach-crepe-v1');
+     }catch(_){/* Primera carga o almacenamiento no disponible */}
+   }
+ }
+ if(!window.__pitchCoachCrepe){
+   analysisStatus.textContent='CREPE: descargando modelo neuronal…';await sleepFrame();
+   // Distribución alternativa: archivos originales en raw.githubusercontent.com,
+   // evitando el CDN jsDelivr que devolvió pesos incompatibles.
+   const base='https://raw.githubusercontent.com/ml5js/ml5-data-and-models/master/models/pitch-detection/crepe/';
+   const url=base+'model.json';
+   try{
+     const response=await fetch(url,{cache:'no-store'});
+     if(!response.ok)throw Error('HTTP '+response.status+' al solicitar model.json (GitHub Raw)');
+     const manifest=await response.json();
+     if(!manifest.modelTopology||!Array.isArray(manifest.weightsManifest))throw Error('Manifest CREPE sin arquitectura o pesos');
+     // Comprobación previa de los pesos: cada shard debe contener suficientes bytes
+     // para sus tensores; rechazar respuestas HTML y descargas truncadas.
+     const shards=[];
+     for(const group of manifest.weightsManifest){
+       let expected=0;
+       for(const w of group.weights){
+         const count=w.shape.reduce((a,b)=>a*b,1);
+         const size=w.dtype==='float32'||w.dtype==='int32'?4:w.dtype==='bool'?1:0;
+         if(!size)throw Error('Tipo de peso no admitido: '+w.dtype);
+         expected+=count*size;
+       }
+       const parts=[];
+       for(const name of group.paths){
+         const res=await fetch(new URL(name,url).href,{cache:'no-store'});
+         if(!res.ok)throw Error('HTTP '+res.status+' al descargar '+name);
+         const bin=await res.arrayBuffer();
+         if(bin.byteLength<16)throw Error('Archivo de pesos vacío: '+name);
+         parts.push(bin);
+       }
+       const received=parts.reduce((n,p)=>n+p.byteLength,0);
+       if(received!==expected)throw Error('Pesos incompletos en GitHub Raw: '+received+' bytes, esperados '+expected+' bytes');
+       shards.push({group,parts});
+     }
+     analysisStatus.textContent='CREPE: pesos verificados · construyendo red…';await sleepFrame();
+     // Handler personalizado: usar exactamente los archivos comprobados.
+     const total=shards.reduce((n,x)=>n+x.parts.reduce((a,p)=>a+p.byteLength,0),0);
+     const all=new Uint8Array(total);let offset=0;
+     const weightSpecs=[];
+     for(const {group,parts} of shards){
+       weightSpecs.push(...group.weights);
+       for(const part of parts){all.set(new Uint8Array(part),offset);offset+=part.byteLength;}
+     }
+     const handler={load:async()=>({modelTopology:manifest.modelTopology,weightSpecs,weightData:all.buffer,format:'layers-model',generatedBy:manifest.generatedBy||'CREPE',convertedBy:manifest.convertedBy||'TFJS'})};
+     window.__pitchCoachCrepe=await tf.loadLayersModel(handler);
+     try{await window.__pitchCoachCrepe.save({save:async artifacts=>{await crepeOPFSWrite(artifacts);return {modelArtifactsInfo:{dateSaved:new Date(),modelTopologyType:'JSON'}}}})}catch(_){/* OPFS no disponible */}
+     if(tf.io&&tf.io.browserIndexedDB&&typeof indexedDB!=='undefined'){
+       try{await window.__pitchCoachCrepe.save('indexeddb://pitch-coach-crepe-v1')}catch(_){/* SiteCase puede bloquear IndexedDB en file:// */}
+     }
+   }catch(e){throw Error('CREPE · distribución GitHub Raw: '+(e&&e.message||e));}
+ }
+ const model=window.__pitchCoachCrepe;
+ const hop=1120,windowSize=1024,raw=[];
+ const total=Math.max(0,Math.floor((samples.length-windowSize)/hop));
+ // Batch de inferencia: mismos 3865 fotogramas, misma separación temporal.
+ // La CPU/GPU ejecuta varios fotogramas por llamada; si el modelo no admite batch,
+ // se vuelve automáticamente a lotes de uno, sin perder precisión de muestreo.
+ let batchSize=window.__pitchCoachCrepeBatchSize||8,usedBatches=0;
+ const decodeScores=(scores)=>{
+   let best=0;for(let j=1;j<360;j++)if(scores[j]>scores[best])best=j;
+   let weighted=0,weight=0;
+   for(let j=Math.max(0,best-4);j<=Math.min(359,best+4);j++){weighted+=j*scores[j];weight+=scores[j];}
+   const cents=(weighted/Math.max(weight,1e-8))*20+1997.3794084376191;
+   const hz=10*Math.pow(2,cents/1200),midi=69+12*Math.log2(hz/440);
+   return scores[best]>=0.55&&Number.isFinite(midi)?{midi:Math.round(midi),confidence:scores[best]}:null;
+ };
+ for(let i=0;i<total;){
+   if(token!==melodyToken)return null;
+   const count=Math.min(batchSize,total-i),normalized=new Float32Array(count*windowSize);
+   const silent=new Uint8Array(count);
+   for(let k=0;k<count;k++){
+     const frame=samples.subarray((i+k)*hop,(i+k)*hop+windowSize);
+     let sum=0,squares=0;
+     for(let j=0;j<windowSize;j++){sum+=frame[j];squares+=frame[j]*frame[j]}
+     const mean=sum/windowSize,variance=Math.max(0,squares/windowSize-mean*mean);
+     if(squares/windowSize<0.0001){silent[k]=1;continue}
+     const scale=Math.max(1e-8,Math.sqrt(variance));
+     for(let j=0;j<windowSize;j++)normalized[k*windowSize+j]=(frame[j]-mean)/scale;
+   }
+   if(silent.every(v=>v===1)){
+     for(let k=0;k<count;k++)raw.push(null);
+     i+=count;continue;
+   }
+   let input=null,out=null;
+   try{
+     input=tf.tensor2d(normalized,[count,windowSize]);
+     out=model.predict(input);
+     const result=Array.isArray(out)?out[0]:out;
+     const data=await result.data();
+     if(data.length!==count*360)throw Error('CREPE: respuesta '+data.length+' para '+count+' fotogramas');
+     for(let k=0;k<count;k++)raw.push(silent[k]?null:decodeScores(data.subarray(k*360,(k+1)*360)));
+     i+=count;usedBatches++;
+   }catch(e){
+     if(batchSize>1){batchSize=1;window.__pitchCoachCrepeBatchSize=1;analysisStatus.textContent='CREPE: modo compatible…';await sleepFrame();continue}
+     throw e;
+   }finally{
+     if(Array.isArray(out))out.forEach(x=>x.dispose());else if(out)out.dispose();
+     if(input)input.dispose();
+   }
+   if(usedBatches%4===0){analysisStatus.textContent='CREPE: '+Math.round(100*i/Math.max(1,total))+' % · '+i+'/'+total+' fotogramas';await sleepFrame()}
+ }
+ if(token!==melodyToken)return null;
+ const notes=[];let current=null;
+ const dt=hop/sampleRate;
+ for(let i=0;i<=raw.length;i++){
+   const r=raw[i]||null;
+   if(current&&(!r||r.midi!==current.midi)){
+     current.end=i*dt;
+     if(current.end-current.start>=0.09)notes.push(current);
+     current=null;
+   }
+   if(r){
+     if(!current)current={midi:r.midi,start:i*dt,end:(i+1)*dt,confidence:r.confidence};
+     else current.confidence=Math.max(current.confidence,r.confidence);
+   }
+ }
+ return {notes,frames:raw.length,batchSize,usedBatches,attacks:telephoneEQ?extractVocalAttacks(samples,sampleRate):[]};
+}
+
+async function analyzeNativeMelody(token,fromMdx,f){
+   analysisStatus.textContent=fromMdx?'Decodificando canal de voz…':'Decodificando audio original (a capela)…';
+   const bytes=fromMdx?await (await fetch(mdxOutputUrls[0])).arrayBuffer():await f.arrayBuffer();if(token!==melodyToken)return;
+   const decoder=new (window.AudioContext||window.webkitAudioContext)();
+   let decoded;try{decoded=await decoder.decodeAudioData(bytes)}finally{await decoder.close()}
+   if(token!==melodyToken)return;
+   const sr=decoded.sampleRate,step=Math.max(1,Math.round(sr*.035)),n=4096;
+   const yinRate=sr/Math.max(1,Math.round(sr/11025)),yinStride=Math.max(1,Math.round(sr/11025)),yinSize=Math.min(2048,Math.floor(n/yinStride));
+   const yinFrame=new Float32Array(yinSize);
+   const channels=decoded.numberOfChannels;
+   const left=decoded.getChannelData(0),right=channels>1?decoded.getChannelData(1):left;
+   const sampleFrame=new Float32Array(n),lattice=[];
+   let previous=null;
+   const count=Math.max(0,Math.floor((decoded.length-n)/step));
+   for(let index=0;index<count;index++){
+     if(token!==melodyToken)return;
+     const offset=index*step;let rms=0;
+     for(let j=0;j<n;j++){
+       const l=left[offset+j],r=right[offset+j];
+       const v=channels>1?(fromMdx?(Math.abs(l)>=Math.abs(r)?l:r):(l+r)*.5):l;
+       sampleFrame[j]=v;rms+=v*v;
+     }
+     rms=Math.sqrt(rms/n);
+     let candidates=[];
+     if(rms>.012){
+       for(let j=0;j<yinSize;j++)yinFrame[j]=sampleFrame[j*yinStride];
+       candidates=melodyCandidates(fftPower(sampleFrame),sr,n,yinCandidates(yinFrame,yinRate));
+     }
+     lattice.push(candidates);
+     if(index%55===0){analysisStatus.textContent='Analizando '+Math.round(85*index/Math.max(1,count))+' %';await sleepFrame()}
+   }
+   if(token!==melodyToken)return;
+   analysisStatus.textContent='Reconstruyendo trayectoria melódica (Viterbi)…';await sleepFrame();
+   const result=viterbiMelody(lattice);
+   if(token!==melodyToken)return;
+   const nativeNotes=melodySegments(stabilizeMelody(result.frames),step/sr);
+   const voicedPct=Math.round(100*result.voiced/Math.max(1,count));
+   return {notes:nativeNotes,voicedPct,confidence:result.confidence,corrections:result.corrections,decoded};
+}
+
+// Cruce conservador: una nota Basic Pitch debe coincidir temporalmente con la
+// trayectoria nativa y estar a un semitono o menos de su altura. No altera ninguno
+// de los dos motores; sólo filtra el resultado de Basic Pitch.
+function crossDetectedNotes(nativeNotes,basicNotes){
+ const native=nativeNotes.slice().sort((a,b)=>a.start-b.start);
+ const kept=[];let j=0;
+ for(const b of basicNotes){
+   while(j<native.length&&native[j].end<b.start-0.08)j++;
+   let match=null,best=0;
+   for(let k=j;k<native.length&&native[k].start<b.end+0.08;k++){
+     const n=native[k];
+     if(Math.abs(n.midi-b.midi)>1)continue;
+     const overlap=Math.max(0,Math.min(n.end,b.end)-Math.max(n.start,b.start));
+     const overlapRatio=overlap/Math.max(0.001,Math.min(n.end-n.start,b.end-b.start));
+     if(overlap>=0.035&&overlapRatio>=0.25&&overlapRatio>best){best=overlapRatio;match=n;}
+   }
+   if(match)kept.push({...b,confidence:Math.max(0,Math.min(1,(b.confidence||0.5)*best))});
+ }
+ return kept;
+}
+
+
+// Postprocesado exclusivo del cruce: fusiona fragmentos de la MISMA altura
+// cuando se solapan o están separados por una pausa muy breve.
+// Mantiene intactas las salidas de los dos detectores y los acordes simultáneos.
+function consolidateCrossNotes(notes,maxGap=0.10){
+ const byPitch=new Map();
+ for(const note of notes){
+   if(!Number.isFinite(note.midi)||!Number.isFinite(note.start)||!Number.isFinite(note.end)||note.end<=note.start)continue;
+   const pitch=Math.round(note.midi);
+   if(!byPitch.has(pitch))byPitch.set(pitch,[]);
+   byPitch.get(pitch).push({...note,midi:pitch});
+ }
+ const merged=[];
+ for(const group of byPitch.values()){
+   group.sort((a,b)=>a.start-b.start||a.end-b.end);
+   let current=null,weight=0;
+   for(const n of group){
+     const duration=Math.max(0.001,n.end-n.start);
+     if(current&&n.start<=current.end+maxGap){
+       const oldWeight=weight;
+       current.end=Math.max(current.end,n.end);
+       weight+=duration;
+       current.confidence=(current.confidence*oldWeight+(n.confidence||0.5)*duration)/weight;
+     }else{
+       if(current)merged.push(current);
+       current={...n};weight=duration;
+     }
+   }
+   if(current)merged.push(current);
+ }
+ return merged.sort((a,b)=>a.start-b.start||a.midi-b.midi);
+}
+
+
+// Limpieza vocal experimental, exclusiva del nuevo modo: limita cada nota CREPE
+// al intervalo temporal respaldado por el nativo y descarta microeventos.
+// No cuantiza ni modifica los resultados originales de ninguno de los motores.
+function refineVocalCross(matched,nativeNotes){
+ const clipped=[];
+ const native=nativeNotes.slice().sort((a,b)=>a.start-b.start);
+ for(const note of matched){
+   let best=null,bestOverlap=0;
+   for(const n of native){
+     if(n.start>note.end+0.04)break;
+     if(n.end<note.start-0.04||Math.abs(n.midi-note.midi)>1)continue;
+     const overlap=Math.max(0,Math.min(note.end,n.end)-Math.max(note.start,n.start));
+     if(overlap>bestOverlap){best=n;bestOverlap=overlap}
+   }
+   if(!best||bestOverlap<0.06||note.confidence<0.23)continue;
+   const start=Math.max(note.start,best.start-0.04),end=Math.min(note.end,best.end+0.04);
+   if(end-start>=0.09)clipped.push({...note,start,end});
+ }
+ return consolidateCrossNotes(clipped,0.07).filter(n=>n.end-n.start>=0.13);
+}
+
+$('analyze').onclick=async()=>{
+ const fromMdx=mdxOutputUrls.length===2;const f=$('file').files?.[0];if(!f){analysisStatus.textContent='Selecciona primero un audio';return}
+ const token=++melodyToken;melodyNotes=[];$('analyze').disabled=true;$('cancelAnalysis').disabled=false;$('cancelAnalysis').textContent='Cancelar';
+ try{
+   if($('recognitionEngine').value==='basic'){await analyzeBasicPitch(token,fromMdx,f);return;}
+   if($('recognitionEngine').value==='crepe'||$('recognitionEngine').value==='crepeeq'||$('recognitionEngine').value==='crepevoice'){
+     const vocalClean=$('recognitionEngine').value==='crepevoice';
+     const telephoneEQ=$('recognitionEngine').value==='crepeeq'||vocalClean;
+     analysisStatus.textContent='CREPE 1/2 · Analizando trayectoria nativa…';await sleepFrame();
+     const native=await analyzeNativeMelody(token,fromMdx,f);
+     if(!native||token!==melodyToken)return;
+     analysisStatus.textContent='CREPE 2/2 · Analizando audio…';await sleepFrame();
+     const crepe=await analyzeCrepeMelody(token,fromMdx,f,telephoneEQ,native.decoded);
+     if(!crepe||token!==melodyToken)return;
+     const matched=crossDetectedNotes(native.notes,crepe.notes);
+     melodyNotes=vocalClean?refineVocalCross(matched,native.notes):consolidateCrossNotes(matched);
+     let rhythmSplits=0;
+     if(vocalClean){const rhythm=refineVocalRhythm(melodyNotes,crepe.attacks||[]);melodyNotes=rhythm.notes;rhythmSplits=rhythm.splitCount;}
+     estimateKey(melodyNotes);
+     $('cancelAnalysis').textContent='Deshacer';
+     analysisStatus.textContent='CREPE'+(telephoneEQ?' · EQ '+$('eqLow').value+'–'+$('eqHigh').value+' Hz':'')+': '+native.notes.length+' nativas · '+crepe.notes.length+' CREPE · '+matched.length+' coincidencias · '+melodyNotes.length+' consolidadas · '+crepe.frames+' fotogramas'+(vocalClean?' · limpieza vocal · ataques rítmicos '+rhythmSplits:'')+'.';
+     return;
+   }
+   if($('recognitionEngine').value==='cross'){
+     analysisStatus.textContent='Cruce 1/2 · Analizando trayectoria nativa…';await sleepFrame();
+     const native=await analyzeNativeMelody(token,fromMdx,f);
+     if(!native||token!==melodyToken)return;
+     analysisStatus.textContent='Cruce 2/2 · Analizando Basic Pitch en audio…';await sleepFrame();
+     const basic=await analyzeBasicPitch(token,fromMdx,f,true);
+     if(!basic||token!==melodyToken)return;
+     const matched=crossDetectedNotes(native.notes,basic);
+     melodyNotes=consolidateCrossNotes(matched);
+     estimateKey(melodyNotes);
+     $('cancelAnalysis').textContent='Deshacer';
+     analysisStatus.textContent='Cruce: '+basic.length+' Basic Pitch · '+native.notes.length+' nativas · '+matched.length+' coincidencias · '+melodyNotes.length+' notas consolidadas ('+(matched.length-melodyNotes.length)+' fragmentos fusionados) · unión ≤100 ms, misma altura.';
+     return;
+   }
+   const native=await analyzeNativeMelody(token,fromMdx,f);
+   if(!native||token!==melodyToken)return;
+   const audio=native.decoded,rate=audio.sampleRate;
+   const mono=new Float32Array(audio.length);
+   const left=audio.getChannelData(0),right=audio.numberOfChannels>1?audio.getChannelData(1):left;
+   for(let i=0;i<mono.length;i++)mono[i]=(left[i]+right[i])*0.5;
+   analysisStatus.textContent='Afinando ritmo de voz…';await sleepFrame();
+   const attacks=extractVocalAttacks(mono,rate);
+   const rhythmic=refineVocalRhythm(native.notes,attacks);
+   melodyNotes=rhythmic.notes;estimateKey(melodyNotes);
+   $('cancelAnalysis').textContent='Deshacer';analysisStatus.textContent='Análisis terminado: '+melodyNotes.length+' notas · voz '+native.voicedPct+' % · confianza '+Math.round(native.confidence*100)+' % (heurística) · correcciones de trayectoria '+native.corrections+' · divisiones rítmicas '+rhythmic.splitCount+' · voz VocalDSP';
+ }catch(e){if(token===melodyToken)analysisStatus.textContent='Error: '+e.message}
+ finally{if(token===melodyToken){$('analyze').disabled=false;if($('cancelAnalysis').textContent!=='Deshacer')$('cancelAnalysis').disabled=true}}
+};
+
+const cv=$('roll'),g=cv.getContext('2d');
+// Sintetizador local Web Audio. Se inicia exclusivamente tras tocar el piano roll.
+let guideCtx=null,guideActive=null,guideTimer=null;
+function stopGuide(){if(guideTimer){clearTimeout(guideTimer);guideTimer=null}if(!guideActive)return;
+ const {osc,osc2,gain,ctx}=guideActive;const t=ctx.currentTime;
+ try{gain.gain.cancelScheduledValues(t);gain.gain.setTargetAtTime(0,t,.008);osc.stop(t+.045);osc2?.stop(t+.045)}catch(_){}guideActive=null;
+}
+function playGuide(midi,duration=1){
+ stopGuide();const instrument=$('guideInstrument').value;if(instrument==='off')return;
+ try{
+  guideCtx=guideCtx||new (window.AudioContext||window.webkitAudioContext)({latencyHint:"interactive"});
+  if(guideCtx.state==='suspended')guideCtx.resume();
+  const ctx=guideCtx,t=ctx.currentTime,f=440*Math.pow(2,(midi-69)/12);
+  const osc=ctx.createOscillator(),osc2=ctx.createOscillator(),gain=ctx.createGain(),filter=ctx.createBiquadFilter();
+  const level=Number($('guideVolume').value)/100*(instrument==='piano'?.65:.22);
+  osc.type=instrument==='pad'?'sawtooth':'triangle';osc.frequency.value=f;
+  osc2.type=instrument==='pad'?'sine':'sine';osc2.frequency.value=instrument==='pad'?f*1.003:f*2;
+  filter.type='lowpass';filter.frequency.value=instrument==='pad'?1400:6500;
+  const mix=ctx.createGain();mix.gain.value=instrument==='pad'?.16:.22;
+  osc.connect(filter);osc2.connect(mix);mix.connect(filter);filter.connect(gain);gain.connect(ctx.destination);
+  gain.gain.setValueAtTime(0,t);
+  if(instrument==='pad'){gain.gain.linearRampToValueAtTime(level,t+.008);gain.gain.setTargetAtTime(level*.65,t+.04,.12)}
+  else{gain.gain.linearRampToValueAtTime(level,t+.003);gain.gain.exponentialRampToValueAtTime(Math.max(.0001,level*.28),t+.85)}
+  osc.start(t);osc2.start(t);guideActive={osc,osc2,gain,ctx};
+  guideTimer=setTimeout(stopGuide,Math.max(15,duration*1000));
+ }catch(e){$('diag').textContent='Audio guía: '+e.message}
+}
+// Pulsar sobre una nota ámbar o sobre el teclado lateral emite su altura.
+cv.style.touchAction='none';
+cv.style.webkitUserSelect='none';cv.style.userSelect='none';
+cv.addEventListener('dblclick',e=>e.preventDefault());
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+let pressedGuideMidi=null,pressedGuideUntil=0;
+let rollPanSeconds=0,rollGesture=null;
+const rollPointers=new Map();let rollPinch=null,rollPinchBlocked=false;
+function pcPlaybackTime(){
+ const t=Number.isFinite(audio.currentTime)?audio.currentTime:0;
+ if(audio.paused||audio.seeking||!audioGraphReady||!musicCtx)return t;
+ const rate=audio.playbackRate||1;
+ const graphDelay=shiftAmount===0?0:(processorDelay||2*(shiftNode?.bufferSize||1024)/musicCtx.sampleRate)+.075;
+ const outputDelay=Number(musicCtx.baseLatency||0)+Number(musicCtx.outputLatency||0);
+ let sourceTime=t;
+ if(processedMode()&&stemSources.length)sourceTime=stemStartOffset+(musicCtx.currentTime-stemStartedAt)*rate;
+ return Math.max(0,sourceTime-(graphDelay+outputDelay)*rate);
+}
+
+function pcRollTime(){return rollGesture&&Number.isFinite(rollGesture.seekTarget)?rollGesture.seekTarget:pcPlaybackTime();}
+
+const rollTouchThreshold=9;
+function rollCoordinates(e){const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top,w:r.width,h:r.height}}
+function tapRollAt(x,y,w,h){
+ const step=h/zoomNotes,lo=viewCenter-zoomNotes/2;
+ let midi=Math.round(lo+(h-y)/step);
+ if(x>52&&melodyNotes.length){
+  const currentX=52+(w-52)*.75,t=pcRollTime();
+  const targetTime=t+(x-currentX)/((currentX-52)/5.5);
+  const match=melodyNotes.find(n=>targetTime>=n.start&&targetTime<=n.end&&Math.abs((n.midi+shiftAmount)-midi)<1.4);
+  if(!match)return;
+  midi=match.midi+shiftAmount;flashGuide(midi);playGuide(midi,Math.min(2,match.end-match.start));
+ }else if(x<=52||!melodyNotes.length){flashGuide(midi);playGuide(midi,1)}
+}
+
+function flashGuide(midi){pressedGuideMidi=Math.round(midi);pressedGuideUntil=performance.now()+190;}
+
+cv.addEventListener('pointerdown',e=>{
+ if(e.cancelable)e.preventDefault();
+ const p0=rollCoordinates(e);
+ rollPointers.set(e.pointerId,p0);
+ try{cv.setPointerCapture(e.pointerId)}catch(_){}
+ if(rollPointers.size>=2){
+  if(!rollPinch&&!rollPinchBlocked){const [a,b]=[...rollPointers.values()];const mid=(a.y+b.y)/2;rollPinch={distance:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),zoom:zoomNotes,anchor:viewCenter+(.5-mid/a.h)*zoomNotes};rollGesture=null;rollPanSeconds=0;stopGuide();}
+  rollPinchBlocked=true;return;
+ }
+ if(rollGesture||rollPinchBlocked)return;
+ try{guideCtx=guideCtx||new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});if(guideCtx.state==='suspended')guideCtx.resume()}catch(_){}
+ try{cv.setPointerCapture(e.pointerId)}catch(_){}
+ const p=rollCoordinates(e);
+ rollGesture={id:e.pointerId,x:p.x,y:p.y,lastX:p.x,lastY:p.y,w:p.w,h:p.h,moved:false};
+ if(p.x<=52){tapRollAt(p.x,p.y,p.w,p.h);rollGesture.played=true;}
+});
+cv.addEventListener('pointermove',e=>{
+ if(rollPointers.has(e.pointerId))rollPointers.set(e.pointerId,rollCoordinates(e));
+ if(rollPinchBlocked){
+  if(e.cancelable)e.preventDefault();
+  if(rollPinch&&rollPointers.size>=2){const [a,b]=[...rollPointers.values()];const dist=Math.max(1,Math.hypot(a.x-b.x,a.y-b.y));const z=Math.max(12,Math.min(48,Math.round(rollPinch.zoom*rollPinch.distance/dist)));$('zoom').value=z;$('zoom').dispatchEvent(new Event('input',{bubbles:true}));viewCenter=Math.max(24,Math.min(108,rollPinch.anchor-(.5-(a.y+b.y)/2/a.h)*zoomNotes));}
+  return;
+ }
+ if(!rollGesture||e.pointerId!==rollGesture.id)return;
+ if(e.cancelable)e.preventDefault();
+ const p=rollCoordinates(e),g0=rollGesture;
+ if(!g0.moved&&Math.hypot(p.x-g0.x,p.y-g0.y)>rollTouchThreshold){g0.moved=true;g0.axis=Math.abs(p.x-g0.x)>Math.abs(p.y-g0.y)?"x":"y";}
+ if(g0.moved){
+  const dx=p.x-g0.lastX,dy=p.y-g0.lastY;
+  if(g0.axis==="y")viewCenter=Math.max(24,Math.min(108,viewCenter+dy/(p.h/zoomNotes)));
+  // Con seguimiento activo, el desplazamiento es temporal y se revierte.
+  const pxPerSecond=((p.w-52)*.75)/5.5;
+  if(g0.axis==="x"&&Number.isFinite(audio.duration)&&audio.duration>0&&Math.abs(dx)>0){
+   const target=Math.max(0,Math.min(audio.duration,(g0.seekTarget??audio.currentTime)-dx/Math.max(1,pxPerSecond)));
+   g0.seekTarget=target;rollPanSeconds=target-audio.currentTime;
+  }
+ }
+ g0.lastX=p.x;g0.lastY=p.y;
+});
+function endRollPointer(e){rollPointers.delete(e.pointerId);if(rollPinchBlocked){rollPinch=null;if(!rollPointers.size)rollPinchBlocked=false;return true;}return false;}
+cv.addEventListener('pointerup',e=>{
+ if(endRollPointer(e)){if(e.cancelable)e.preventDefault();return;}
+ if(!rollGesture||e.pointerId!==rollGesture.id)return;
+ if(e.cancelable)e.preventDefault();
+ const g0=rollGesture;rollGesture=null;
+ if(!g0.moved&&!g0.played)tapRollAt(g0.x,g0.y,g0.w,g0.h);else if(Number.isFinite(g0.seekTarget)){audio.currentTime=g0.seekTarget;rollPanSeconds=0;}
+ try{cv.releasePointerCapture(e.pointerId)}catch(_){}
+});
+cv.addEventListener('pointercancel',e=>{endRollPointer(e);if(rollGesture?.id===e.pointerId)rollGesture=null});
+cv.addEventListener('lostpointercapture',e=>{if(rollPointers.has(e.pointerId)){endRollPointer(e);if(rollGesture?.id===e.pointerId)rollGesture=null;}});
+audio.addEventListener('seeked',()=>{rollPanSeconds=0});
+$('file').addEventListener('change',()=>{rollPanSeconds=0});
+window.addEventListener('pagehide',()=>{stopGuide();guideCtx?.close()});
+function draw(now){
+ requestAnimationFrame(draw);
+ const dpr=Math.min(window.devicePixelRatio||1,2),w=cv.clientWidth,h=cv.clientHeight;
+ if(!w||!h)return;
+ if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr)}
+ g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+ // El zoom solo cambia la escala visual; no altera el detector ni la persistencia.
+ // El seguimiento recentra suavemente la vista y evita saltos de pantalla.
+ if($('follow').checked&&!rollGesture){
+   rollPanSeconds*=.78;if(Math.abs(rollPanSeconds)<.015)rollPanSeconds=0;
+ }
+ if(!rollPinchBlocked&&$('follow').checked&&voice.active&&Number.isFinite(voice.lastMidi)){
+   const target=Math.max(36,Math.min(84,voice.lastMidi));
+   viewCenter+=Math.max(-.65,Math.min(.65,(target-viewCenter)*.09));
+ }
+ const lo=viewCenter-zoomNotes/2,hi=viewCenter+zoomNotes/2,left=52,step=h/zoomNotes;
+ const yFor=m=>h-(m-lo)*step;
+ const first=Math.floor(lo),last=Math.ceil(hi);
+ for(let m=first;m<=last;m++){
+   const y=yFor(m);if(y<0||y>h)continue;
+   const isC=m%12===0,isWhite=[0,2,4,5,7,9,11].includes((m%12+12)%12);
+   g.fillStyle=isWhite?'#14222d':'#101923';
+   g.fillRect(left,y-step/2,w-left,step);
+   const root=effectiveKey()?(effectiveKey().root+shiftAmount+120)%12:null;
+   const highlight=Number($('scaleHighlight').value)/100;
+   if(root!==null&&highlight>0&&scaleIntervals[$('scaleType').value].includes(((m-root)%12+12)%12)){
+    g.fillStyle='rgba(184,133,235,'+(highlight*.55)+')';
+    g.fillRect(left,y-step/2,w-left,step);
+   }
+   g.strokeStyle=isC?'#526b7a':'#283b48';g.lineWidth=isC?1.4:.65;
+   g.beginPath();g.moveTo(left,y);g.lineTo(w,y);g.stroke();
+   if(zoomNotes<=24||isC||m%3===0||(pressedGuideMidi===m&&now<pressedGuideUntil)){
+     const pressed=pressedGuideMidi===m&&now<pressedGuideUntil;
+     const scaleOn=root!==null&&scaleIntervals[$('scaleType').value].includes(((m-root)%12+12)%12);
+     g.fillStyle=pressed?'#6be6c0':scaleOn&&highlight>0?'#b89ad7':isWhite?'#dce6eb':'#293844';g.fillRect(0,y-step/2,left,step);
+     if(pressed){g.strokeStyle='#fff5bb';g.lineWidth=2;g.strokeRect(1,y-step/2+1,left-2,Math.max(2,step-2))}
+     g.fillStyle=isWhite?'#1b2a36':'#d9e4eb';g.font=(zoomNotes<=12?'12':'10')+'px system-ui';
+     g.fillText(names[(m%12+12)%12]+(Math.floor(m/12)-1),5,y+3);
+   }
+ }
+ const span=5500,cut=now-span;
+ const currentX=left+(w-left)*.75; // 25% del ancho queda libre para anticipación
+ g.strokeStyle="#7d9caa";g.lineWidth=1;g.setLineDash([3,5]);g.beginPath();g.moveTo(currentX,0);g.lineTo(currentX,h);g.stroke();g.setLineDash([]);
+ points=points.filter(p=>p.time>=cut);
+ // Dibujar cada emisión como una cinta continua, no como trazos independientes.
+ // Un segmento corto (30 ms) no tiene anchura visual suficiente para parecer una nota.
+ const bands=[];let band=[];
+ for(let i=0;i<points.length;i++){
+   const p=points[i],prev=points[i-1];
+   const split=p.event==='start'||p.event==='end'||(prev&&p.time-prev.time>160);
+   if(split&&band.length){bands.push(band);band=[]}
+   if(p.event!=='end')band.push(p);
+   if(p.event==='end'&&prev&&prev.event!=='end'){
+     // El punto final mantiene el borde horizontal hasta el final de la nota.
+     band.push({time:p.time,midi:prev.midi,event:'hold'});
+     bands.push(band);band=[];
+   }
+ }
+ if(band.length)bands.push(band);
+ const xFor=p=>currentX+(p.time-now)/span*(currentX-left);
+
+ // La referencia está anclada al tiempo de reproducción, no al tiempo del micrófono.
+ // Posición actual al 75%: derecha = anticipación, izquierda = historia.
+ if(melodyNotes.length&&Number.isFinite(audio.currentTime)){
+   const t=pcRollTime(),visiblePast=5.5,visibleFuture=1.85;
+   const pxPerSecond=(currentX-left)/visiblePast;
+   const shift=shiftAmount;
+   g.save();g.beginPath();g.rect(left,0,w-left,h);g.clip();
+   for(const note of melodyNotes){
+     if(note.end<t-visiblePast||note.start>t+visibleFuture)continue;
+     const x1=currentX+(note.start-t)*pxPerSecond,x2=currentX+(note.end-t)*pxPerSecond;
+     const y=yFor(note.midi+shift),height=Math.max(4,step*.78);
+     if(y+height/2<0||y-height/2>h)continue;
+     g.fillStyle='rgba(255,174,44,.85)';
+     g.fillRect(x1,y-height/2,Math.max(2,x2-x1),height);
+     g.strokeStyle='#ffe6a0';g.lineWidth=1;
+     g.strokeRect(x1,y-height/2,Math.max(2,x2-x1),height);
+   }
+   // Guía de armonía: mismas duraciones que la melodía original.
+   if(window.pitchCoachHarmony?.visible && window.pitchCoachHarmony.notes?.length){
+     for(const note of window.pitchCoachHarmony.notes){
+       if(note.end<t-visiblePast||note.start>t+visibleFuture)continue;
+       const x1=currentX+(note.start-t)*pxPerSecond,x2=currentX+(note.end-t)*pxPerSecond;
+       const y=yFor(note.midi+shift),height=Math.max(3,step*.58);
+       if(y+height/2<0||y-height/2>h)continue;
+       g.fillStyle='rgba(57,216,184,.75)';
+       g.fillRect(x1,y-height/2,Math.max(2,x2-x1),height);
+       g.strokeStyle='#c4fff0';g.lineWidth=1;
+       g.strokeRect(x1,y-height/2,Math.max(2,x2-x1),height);
+     }
+   }
+   g.restore();
+ }
+ const ribbon=Math.max(4,step*thickness);
+ g.save();g.beginPath();g.rect(left,0,w-left,h);g.clip();
+ for(const b of bands){
+   if(!b.length)continue;
+   // Añadir una extensión mínima visible a notas muy cortas.
+   const x0=xFor(b[0]);
+   g.lineJoin='round';g.lineCap='butt';
+   const path=new Path2D();path.moveTo(x0,yFor(b[0].midi));
+   if(b.length===1)path.lineTo(Math.min(currentX,x0+Math.max(2,ribbon*.35)),yFor(b[0].midi));
+   else for(let j=1;j<b.length;j++)path.lineTo(xFor(b[j]),yFor(b[j].midi));
+   g.strokeStyle='rgba(75,213,186,.67)';g.lineWidth=ribbon;g.stroke(path);
+   // Borde y línea de afinación; el centro es el valor real detectado.
+   g.strokeStyle='#9bfce8';g.lineWidth=1.5;g.stroke(path);
+ }
+ g.restore();
+}
+requestAnimationFrame(draw);
+</script><script>if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(e=>console.warn("Caché offline:",e)));}</script>
+<section class="panel" id="mdxLab" style="display:none" hidden>
+ <div class="row"><strong>Laboratorio MDX · local 0.4.0</strong></div>
+ <p class="note">Prueba directa en esta página, sin pestañas. Primero prueba la biblioteca y el modelo; después, un fragmento de 60 segundos. No altera las pistas del reproductor.</p>
+ <div class="row" style="display:flex;flex-wrap:wrap;gap:8px"><button id="labModel" type="button">1 · Cargar modelo</button><button id="labThree" type="button">2 · Separar 60 s</button><button id="labCopy" type="button">Copiar registro</button></div>
+ <pre id="labLog" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:280px;overflow:auto;font-size:12px;background:#101820;color:#cde7e4;padding:10px;border-radius:8px">Esperando prueba…</pre>
+</section>
+<script>
+(function(){
+'use strict';
+const modelBtn=document.getElementById('labModel'),threeBtn=document.getElementById('labThree'),logEl=document.getElementById('labLog');
+let separator=null,loading=null,busy=false;const lines=[];
+function log(s){const line=new Date().toLocaleTimeString()+' · '+s;lines.push(line);logEl.textContent=lines.join('\n');logEl.scrollTop=logEl.scrollHeight;}
+function fail(e){log('ERROR: '+(e?.stack||e?.message||String(e)));}
+async function model(){
+ if(separator){log('Modelo ya cargado en memoria: reutilizando sesión');return separator;}
+ if(loading){log('Carga anterior en curso');return loading;}
+ loading=(async()=>{
+ log('Comprobando WebAssembly: '+(typeof WebAssembly));
+ log('Importando web-audio-separation@0.3.1 desde esm.sh');
+ const lib=await import('https://esm.sh/web-audio-separation@0.3.1?bundle');
+ log('Biblioteca importada; createSeparator='+typeof lib.createSeparator);
+ const sep=lib.createSeparator('UVR_MDXNET_KARA_2',{mdx:{executionProviders:['wasm'],batchSize:1,segmentSize:256,overlap:.25}});
+ log('Iniciando loadModel(). Puede usar caché o red; esta API no indica cuál.');
+ const start=performance.now();await sep.loadModel();
+ separator=sep;log('Modelo listo; loadModel() '+((performance.now()-start)/1000).toFixed(1)+' s');return sep;
+ })();
+ try{return await loading;}finally{loading=null;}
+}
+async function run(action){if(busy)return;busy=true;modelBtn.disabled=threeBtn.disabled=true;
+ try{
+ if(action==='model'){await model();return;}
+ const f=document.getElementById('file').files?.[0];if(!f)throw Error('Selecciona primero una canción');
+ log('Archivo: '+f.name+' ('+(f.size/1048576).toFixed(1)+' MB)');
+ log('Decodificando audio para extraer los primeros 60 segundos');
+ const ctx=new (window.AudioContext||window.webkitAudioContext)();let url;
+ try{
+ const decoded=await ctx.decodeAudioData(await f.arrayBuffer());
+ log('Decodificado: '+decoded.duration.toFixed(1)+' s, '+decoded.sampleRate+' Hz, '+decoded.numberOfChannels+' canales');
+ const seconds=Math.min(60,decoded.duration),sr=decoded.sampleRate,ch=Math.min(2,decoded.numberOfChannels),frames=Math.floor(seconds*sr);
+ const ab=new ArrayBuffer(44+frames*ch*2),v=new DataView(ab);let pos=0;
+ const str=t=>{for(let i=0;i<t.length;i++)v.setUint8(pos++,t.charCodeAt(i))};
+ const u16=n=>{v.setUint16(pos,n,true);pos+=2},u32=n=>{v.setUint32(pos,n,true);pos+=4};
+ str('RIFF');u32(36+frames*ch*2);str('WAVEfmt ');u32(16);u16(1);u16(ch);u32(sr);u32(sr*ch*2);u16(ch*2);u16(16);str('data');u32(frames*ch*2);
+ const channels=Array.from({length:ch},(_,i)=>decoded.getChannelData(i));
+ for(let i=0;i<frames;i++)for(let c=0;c<ch;c++){const x=Math.max(-1,Math.min(1,channels[c][i]));v.setInt16(pos,x<0?Math.round(x*32768):Math.round(x*32767),true);pos+=2;}
+ const blob=new Blob([ab],{type:'audio/wav'});url=URL.createObjectURL(blob);log('WAV temporal creado: '+Math.round(blob.size/1024)+' KB');
+ const sep=await model();log('Iniciando sep.separate() con '+seconds+' segundos');const t=performance.now();
+ const result=await sep.separate(url);log('Separación completada en '+((performance.now()-t)/1000).toFixed(1)+' s; salidas: '+Object.keys(result||{}).join(', '));
+ }finally{if(url)URL.revokeObjectURL(url);await ctx.close().catch(()=>{});}
+ }catch(e){fail(e);}finally{busy=false;modelBtn.disabled=threeBtn.disabled=false;}
+}
+modelBtn.addEventListener('click',()=>run('model'));
+threeBtn.addEventListener('click',()=>run('three'));
+document.getElementById('labCopy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(lines.join('\n'));log('Registro copiado')}catch(e){log('Copia no disponible; selecciona el texto manualmente')}});
+window.addEventListener('error',e=>log('Error global: '+e.message));
+window.addEventListener('unhandledrejection',e=>log('Promesa rechazada: '+(e.reason?.message||String(e.reason))));
+log('Laboratorio iniciado · origen '+location.protocol);
+})();
+</script>
+<script>
+/* Armonía experimental por terceras. Desplazamientos diatónicos
+   según los ejemplos del usuario: C4 -> E4/G4 y G3/E3. */
+(()=>{
+'use strict';
+const E=id=>document.getElementById(id);
+const H=window.pitchCoachHarmony={notes:[],visible:false,sourceCount:0,keySig:'',interval:'2'};
+const intervals={12:7,2:4,1:2,'-1':-3,'-2':-5,'-12':-7};
+const mod=(x,n)=>((x%n)+n)%n;
+function scaleMidi(root,pattern,from=24,to=108){
+ const out=[];for(let m=from;m<=to;m++)if(pattern.includes(mod(m-root,12)))out.push(m);return out;
+}
+function keySig(){return effectiveKey()?`${effectiveKey().root}:${E('scaleType').value}:${melodyNotes.length}:${melodyNotes[0]?.start||0}`:''}
+function refresh(){
+ const ready=!!effectiveKey()&&melodyNotes.length>0;
+ E('harmonyGenerate').disabled=!ready;
+ if(!ready&&H.notes.length)clear();
+}
+function clear(){
+ H.notes=[];H.visible=false;H.sourceCount=0;
+ E('harmonyShow').checked=false;E('harmonyShow').disabled=true;
+ E('harmonyFullShow').checked=false;E('harmonyFullShow').disabled=true;
+ E('harmonyStatus').textContent='Primero detecta la melodía y la tonalidad.';
+}
+function generate(){
+ if(E('harmonyEngine').value==='chords'){window.pitchCoachChordHarmony?.generate();return}
+ refresh();if(E('harmonyGenerate').disabled)return;
+ const root=mod(effectiveKey().root,12),pattern=scaleIntervals[E('scaleType').value];
+ if(!pattern){E('harmonyStatus').textContent='Escala no compatible.';return}
+ const pool=scaleMidi(root,pattern);
+ const notes=melodyNotes.slice().sort((a,b)=>a.start-b.start);
+ const stepCount=intervals[E('harmonyInterval').value];
+ let last=null;const result=[];
+ for(let i=0;i<notes.length;i++){
+  const n=notes[i],m=Math.round(n.midi);
+  // Las voces se construyen con desplazamientos diatónicos que respetan
+  // los intervalos de terceras del ejemplo de referencia.
+  let idx=pool.findIndex(p=>p>=m);
+  if(idx<0)idx=pool.length-1;
+  if(pool[idx]!==m){
+    // Contorno de las tres notas previas; si asciende, preferir la inferior.
+    const history=notes.slice(Math.max(0,i-3),i).map(x=>x.midi);
+    const delta=history.length>=2?history.at(-1)-history[0]:0;
+    if(delta>0&&idx>0)idx--;
+  }
+  const offset=stepCount;
+  let target=pool[Math.max(0,Math.min(pool.length-1,idx+offset))];
+  // Si la nota resultante supera el rango disponible, se repite la más cercana.
+  if(!Number.isFinite(target))target=last??m;
+  result.push({midi:target,start:n.start,end:n.end,confidence:n.confidence??1});
+  last=target;
+ }
+ H.notes=result;H.sourceCount=melodyNotes.length;H.keySig=keySig();H.interval=E('harmonyInterval').value;H.visible=true;
+ E('harmonyShow').disabled=false;E('harmonyFullShow').disabled=false;
+ E('harmonyShow').checked=true;E('harmonyFullShow').checked=true;
+ E('harmonyStatus').textContent=`${result.length} notas generadas · ritmo original conservado`;
+}
+function show(checked){H.visible=!!checked&&H.notes.length>0;E('harmonyShow').checked=H.visible;E('harmonyFullShow').checked=H.visible}
+E('harmonyGenerate').addEventListener('click',generate);
+E('harmonyShow').addEventListener('change',e=>show(e.target.checked));
+E('harmonyFullShow').addEventListener('change',e=>show(e.target.checked));
+E('harmonyEngine').addEventListener('change',()=>{E('chordEngineSettings').hidden=E('harmonyEngine').value!=='chords';window.pitchCoachChordHarmony?.refresh();});
+E('harmonyInterval').addEventListener('change',()=>{if(H.notes.length)E('harmonyStatus').textContent='Intervalo modificado: pulsa Generar para actualizar.'});
+E('scaleType').addEventListener('change',()=>{if(H.notes.length){clear();E('harmonyStatus').textContent='Escala modificada: vuelve a generar.'}});
+E('file').addEventListener('change',clear);
+E('cancelAnalysis').addEventListener('click',()=>{clear();refresh()});
+const originalEstimate=estimateKey;
+estimateKey=function(notes){originalEstimate(notes);if(H.notes.length&&keySig()!==H.keySig)clear();refresh()};
+window.pitchCoachHarmonyRefresh=refresh;
+window.pitchCoachHarmonyClear=clear;
+window.pitchCoachHarmonyRestore=(data)=>{
+ if(!data?.notes?.length)return;
+ H.notes=data.notes;H.visible=!!data.visible;H.sourceCount=melodyNotes.length;H.keySig=keySig();H.interval=String(data.interval??'2');
+ E('harmonyInterval').value=H.interval;E('harmonyShow').disabled=false;E('harmonyFullShow').disabled=false;show(H.visible);refresh();
+ E('harmonyStatus').textContent=`${H.notes.length} notas recuperadas de la sesión`;
+};
+refresh();
+})();
+</script>
+<script>
+/* Motor experimental: analiza exclusivamente el stem instrumental generado.
+   Acordes diatónicos y continuidad temporal. No afirma exactitud polifónica. */
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id);
+const C=window.pitchCoachChordHarmony={bass:[],chords:[],cutoff:180,ready:false};
+const pc=n=>(n%12+12)%12;
+const hz=v=>40*Math.pow(10,v/1000),pos=f=>1000*Math.log10(f/40);
+const cutoff=$('bassCutoff');cutoff.value=String(Math.round(pos(180)));
+function updateCut(){C.cutoff=hz(+cutoff.value);$('bassCutoffValue').textContent=Math.round(C.cutoff)+' Hz';C.ready=false;C.bass=[];C.chords=[];$('chordSummary').textContent='Filtro modificado: vuelve a detectar.'}
+cutoff.addEventListener('input',()=>{$('bassCutoffValue').textContent=Math.round(hz(+cutoff.value))+' Hz'});cutoff.addEventListener('change',updateCut);
+function refresh(){
+ const chordMode=$('harmonyEngine').value==='chords';
+ $('chordEngineSettings').hidden=!chordMode;
+ $('bassAnalyze').disabled=!chordMode||!effectiveKey()||!melodyNotes.length||(! $('file').files?.[0]&&mdxOutputUrls.length!==2)||C.busy;
+ if(chordMode)$('harmonyGenerate').disabled=!C.ready||!melodyNotes.length;
+}
+function autocorr(frame,sr){
+ const n=frame.length;let energy=0;for(let i=0;i<n;i++)energy+=frame[i]*frame[i];
+ if(energy/n<1e-7)return null;
+ let best=0,lag=0;
+ const min=Math.max(2,Math.floor(sr/400)),max=Math.min(Math.floor(sr/40),n/2|0);
+ for(let t=min;t<=max;t++){
+  let dot=0,a=0,b=0;
+  for(let i=0;i<n-t;i+=2){const x=frame[i],y=frame[i+t];dot+=x*y;a+=x*x;b+=y*y}
+  const c=dot/Math.sqrt(a*b+1e-12);
+  if(c>best){best=c;lag=t}
+ }
+ if(best<.46||!lag)return null;
+ return {midi:Math.round(69+12*Math.log2(sr/lag/440)),confidence:best};
+}
+const sleep=()=>new Promise(r=>setTimeout(r,0));
+async function analyze(){
+ if(C.busy)return;const original=$('file').files?.[0],separated=mdxOutputUrls.length===2;if(!separated&&!original){$('bassStatus').textContent='Selecciona una canción.';return}
+ if(!effectiveKey()||!melodyNotes.length){$('bassStatus').textContent='Primero detecta melodía y tonalidad.';return}
+ C.busy=true;$('bassAnalyze').disabled=true;C.ready=false;C.bass=[];C.chords=[];$('bassProgress').value=0;
+ try{
+  $('bassStatus').textContent=separated?'Decodificando acompañamiento…':'Decodificando canción…';await sleep();
+  const bytes=separated?await (await fetch(mdxOutputUrls[1])).arrayBuffer():await original.arrayBuffer();
+  const ctx=new (window.AudioContext||window.webkitAudioContext)();
+  let decoded;try{decoded=await ctx.decodeAudioData(bytes)}finally{await ctx.close()}
+  const rate=8000;
+  const offline=new (window.OfflineAudioContext||window.webkitOfflineAudioContext)(1,Math.ceil(decoded.duration*rate),rate);
+  const src=offline.createBufferSource();src.buffer=decoded;
+  const split=offline.createChannelSplitter(decoded.numberOfChannels);
+  const mix=offline.createGain();mix.gain.value=1/decoded.numberOfChannels;
+  const low=offline.createBiquadFilter();low.type='lowpass';low.frequency.value=C.cutoff;low.Q.value=Math.SQRT1_2;
+  src.connect(split);for(let i=0;i<decoded.numberOfChannels;i++)split.connect(mix,i,0);
+  mix.connect(low);low.connect(offline.destination);src.start();
+  $('bassStatus').textContent='Aplicando filtro pasa bajos…';
+  const rendered=await offline.startRendering(),samples=rendered.getChannelData(0);
+  const windowSize=4096,hop=2000,frame=new Float32Array(windowSize),events=[];
+  let lastRms=0;
+  for(let off=0;off+windowSize<samples.length;off+=hop){
+   frame.set(samples.subarray(off,off+windowSize));
+   const found=autocorr(frame,rate);
+   let rms=0;for(let j=0;j<windowSize;j+=8)rms+=frame[j]*frame[j];
+   rms=Math.sqrt(rms/(windowSize/8));
+   const time=(off+windowSize/2)/rate;
+   events.push({time,midi:found?.midi??null,confidence:found?.confidence??0,attack:rms>lastRms*1.6&&rms>.008});
+   lastRms=lastRms*.55+rms*.45;
+   if(events.length%90===0){$('bassProgress').value=Math.min(90,off/samples.length*90);await sleep()}
+  }
+  C.bass=events;
+  // Acordes permitidos: tríadas construidas por terceras dentro de la escala.
+  infer(events,decoded.duration);
+ }catch(e){$('bassStatus').textContent='Error: '+e.message;C.ready=false}
+ finally{C.busy=false;refresh()}
+}
+function infer(events,duration){
+ if(!effectiveKey()||!events.length||!duration)return;
+ C.duration=duration;
+  const scale=scaleIntervals[$('scaleType').value],root=effectiveKey().root;
+  const isMajor=['major','naturalMajor','majorNatural'].includes($('scaleType').value);
+  const isMinor=['minor','naturalMinor','minorNatural'].includes($('scaleType').value);
+  const triads=scale.map((degree,i)=>{
+    const pcs=[0,2,4].map(k=>pc(root+scale[(i+k)%scale.length]));
+    const r=pc(root+degree),d=pc(pcs[1]-pcs[0]);
+    return {root:r,pcs,name:names[r]+(d===4?(pc(pcs[2]-r)===8?'+':''):d===3?(pc(pcs[2]-r)===6?'°':'m'):'°'),bassPriority:r,degree:i};
+  });
+  if(isMajor&&triads.length===7){
+    const v=triads[4],vii=triads[6];
+    triads[6]={...v,name:v.name+'/'+names[vii.root],bassPriority:vii.root,degree:6,inversion:true};
+  }
+  if(isMinor&&triads.length===7){
+    const seventh=triads[6],second=triads[1];
+    triads[1]={...seventh,name:seventh.name+'/'+names[second.root],bassPriority:second.root,degree:1,inversion:true};
+  }
+  C.chords=[];
+  const segmentLength=2.5;let prev=null;
+  for(let t=0;t<duration;t+=segmentLength){
+   const end=Math.min(duration,t+segmentLength);
+   const bass=events.filter(e=>e.time>=t&&e.time<end&&e.midi!=null);
+   const melody=melodyNotes.filter(n=>n.end>t&&n.start<end);
+   let best=null;
+   for(const chord of triads){
+    let score=0;
+    for(const e of bass){const pitch=pc(e.midi);score+=(pitch===(chord.bassPriority??chord.root)?2.8:chord.pcs.includes(pitch)?1.2:-.75)*e.confidence}
+    for(const n of melody){const pitch=pc(Math.round(n.midi));score+=(chord.pcs.includes(pitch)?.45:-.2)*Math.min(.8,Math.max(0,Math.min(n.end,end)-Math.max(n.start,t)))}
+    if(prev&&prev.name===chord.name)score+=1.5;
+    if(!best||score>best.score)best={...chord,score,start:t,end};
+   }
+   C.chords.push(best);prev=best;
+  }
+  // Evitar cambios fugaces: fusionar segmentos consecutivos del mismo acorde.
+  const merged=[];
+  for(const chord of C.chords){const prev=merged.at(-1);if(prev&&prev.name===chord.name)prev.end=chord.end;else merged.push({...chord})}
+  C.chords=merged;C.ready=!!merged.length;
+  $('bassProgress').value=100;
+  $('bassStatus').textContent=`Bajo: ${events.filter(e=>e.midi!==null).length} muestras con altura · ${merged.length} regiones armónicas (estimadas)`;
+  $('chordSummary').textContent=merged.slice(0,16).map(c=>`${c.start.toFixed(1)}s ${c.name}`).join(' · ')+(merged.length>16?'…':'');
+ }
+function rekey(){
+ if(C.busy||!C.bass.length||!effectiveKey())return;
+ const duration=C.duration||C.chords.at(-1)?.end||C.bass.at(-1)?.time;
+ const H=window.pitchCoachHarmony,had=H.notes.length&&H.keySig.startsWith('chord:'),visible=H.visible;
+ infer(C.bass,duration);
+ if(had){generate();H.visible=visible;$('harmonyShow').checked=visible;$('harmonyFullShow').checked=visible;}
+ refresh();
+}
+function generate(){
+ if(!C.ready){$('harmonyStatus').textContent='Detecta primero el bajo y los acordes.';return}
+ const iv=$('harmonyInterval').value;
+ const dir=iv==='12'?12:iv==='-12'?-12:0;
+ const count=iv==='2'||iv==='-2'?2:1,up=iv==='2'||iv==='1';
+ const out=[];
+ for(const n of melodyNotes){
+  const chord=C.chords.find(c=>n.start>=c.start&&n.start<c.end)||C.chords.at(-1);
+  if(!chord)continue;
+  let pitch=Math.round(n.midi);
+  if(dir)pitch+=dir;
+  else{
+   // Chord tones strictly above/below the original note, not scale steps.
+   for(let k=0;k<count;k++){
+    let candidate=pitch+(up?1:-1);
+    while(candidate>=24&&candidate<=108&&!chord.pcs.includes(pc(candidate)))candidate+=up?1:-1;
+    if(candidate>=24&&candidate<=108)pitch=candidate;
+   }
+  }
+  out.push({...n,midi:pitch});
+ }
+ const H=window.pitchCoachHarmony;
+ H.notes=out;H.visible=true;H.interval=iv;H.keySig='chord:'+C.chords.length;
+ $('harmonyShow').checked=true;$('harmonyShow').disabled=false;
+ $('harmonyFullShow').checked=true;$('harmonyFullShow').disabled=false;
+ $('harmonyStatus').textContent=`${out.length} notas · armonía por acordes inferidos`;
+}
+$('bassAnalyze').addEventListener('click',analyze);
+$('harmonyEngine').addEventListener('change',refresh);
+$('file').addEventListener('change',()=>{C.ready=false;C.bass=[];C.chords=[];refresh()});
+$('scaleType').addEventListener('change',rekey);
+window.pitchCoachChordHarmony={refresh,generate,rekey,clear:()=>{C.ready=false;C.bass=[];C.chords=[];refresh()},state:C,restore:d=>{if(!d)return;C.bass=d.bass||[];C.chords=d.chords||[];C.duration=d.duration||C.chords.at(-1)?.end;C.ready=!!d.ready&&C.chords.length>0;refresh()}};
+setInterval(refresh,1000);
+refresh();
+})();
+</script>
+<script>
+/* Sesiones 0.4.0: contenedor binario portable, compatible con JSON anterior */
+(()=>{
+'use strict';
+const el=id=>document.getElementById(id);
+const file=el('file'),picker=el('pcSessionFile'),menu=el('pcSessionMenu');
+let sessionName='Sin título',pending=null;
+let busy=false;
+async function pack(){const d=snapshot(),parts=[],entries=[];async function add(key,blob){if(!blob)return;entries.push({key,size:blob.size,type:blob.type});parts.push(blob)}
+const source=file.files?.[0];await add('original',source);if(source)await add('player',await (await fetch(el('player').currentSrc||el('player').src)).blob());
+for(let i=0;i<mdxOutputUrls.length;i++)await add('stem'+i,await(await fetch(mdxOutputUrls[i])).blob());await add('fullWav',fullWavBlob);
+let artifacts=window.pcSessionCrepe;if(window.__pitchCoachCrepe)await window.__pitchCoachCrepe.save({save:async a=>{artifacts=a;return {modelArtifactsInfo:{dateSaved:new Date(),modelTopologyType:'JSON'}}}});
+if(artifacts){d.crepe={modelTopology:artifacts.modelTopology,weightSpecs:artifacts.weightSpecs};await add('crepe',new Blob(Array.isArray(artifacts.weightData)?artifacts.weightData:[artifacts.weightData]));}
+d.schema=3;d.midi=!!window.pcMidiReady;d.entries=entries;d.viewCenter=viewCenter;const meta=new Blob([JSON.stringify(d)]),head=new Uint8Array(8);head.set([80,84,67,72]);new DataView(head.buffer).setUint32(4,meta.size,true);return new Blob([head,meta,...parts],{type:'application/octet-stream'});}
+async function unpack(f){const head=new Uint8Array(await f.slice(0,8).arrayBuffer());if(String.fromCharCode(...head.slice(0,4))!=='PTCH')return {d:JSON.parse((await f.text()).replace(/^\uFEFF/,'')),assets:null};const len=new DataView(head.buffer).getUint32(4,true);if(len>f.size-8)throw Error('Sesión incompleta');const d=JSON.parse(await f.slice(8,8+len).text());let pos=8+len;const assets={};for(const e of d.entries||[]){if(!Number.isSafeInteger(e.size)||e.size<0||pos+e.size>f.size)throw Error('Pista incompleta');assets[e.key]=f.slice(pos,pos+e.size,e.type);pos+=e.size}return {d,assets};}
+async function restoreBundle(d,a){if(d.format!=='PitchCoachSession')throw Error('Formato no reconocido');pending=null;window.pcRestoring=true;try{file.value='';if(a.original){const dt=new DataTransfer();dt.items.add(new File([a.original],d.audio.name,{type:a.original.type,lastModified:d.audio.lastModified||Date.now()}));file.files=dt.files;}file.dispatchEvent(new Event('change',{bubbles:true}));const p=el('player');p.pause();if(a.player){p.src=URL.createObjectURL(a.player);p.load()}else if(!a.original){p.removeAttribute('src');p.load();el('filename').textContent='Ningún archivo';}mdxDispose();mdxOutputUrls=['stem0','stem1'].filter(k=>a[k]).map(k=>URL.createObjectURL(a[k]));fullWavBlob=a.fullWav||null;if(fullWavBlob)fullWavUrl=URL.createObjectURL(fullWavBlob);window.pcMidiReady=!!d.midi;el('harmonyPlay').disabled=!d.midi;el('analyze').disabled=!!d.midi||!a.original;el('dspRun').disabled=!!d.midi||!a.original;if(mdxOutputUrls.length===2){el('dspProgress').value=100;el('dspCancel').disabled=false;el('dspCancel').textContent='Deshacer';el('dspStatus').textContent='Pistas recuperadas';}if(a.crepe&&d.crepe){window.pcSessionCrepe={...d.crepe,weightData:await a.crepe.arrayBuffer()};}applySettings(d.settings);restoreAnalysis(d.analysis);window.pitchCoachHarmonyRestore?.(d.harmony);window.pitchCoachChordHarmony?.restore(d.chordAnalysis);if(Number.isFinite(d.viewCenter))viewCenter=d.viewCenter;enforceConsoleMute();switchConsole();const seek=()=>{p.currentTime=Math.min(d.playback?.time||0,p.duration||0)};if(p.readyState>=1)seek();else p.addEventListener('loadedmetadata',seek,{once:true});el('pcSessionLabel').textContent=sessionName;el('status').textContent='Sesión completa recuperada';}finally{window.pcRestoring=false;menu.open=false;}}
+
+const settingIds=['volume','transpose','stemVoice','stemInstrument','recognitionEngine','eqLow','eqHigh','eqLowSlider','eqHighSlider','manualRoot','manualMode','manualKey','scaleType','scaleHighlight','guideInstrument','guideVolume','zoom','follow','thick','drop','hold','harmonyInterval','harmonyEngine','bassCutoff','harmonyPlay'];
+const settings=()=>Object.fromEntries(settingIds.filter(id=>el(id)).map(id=>{const n=el(id);return [id,n.type==='checkbox'?n.checked:n.value]}));
+function snapshot(){return {format:'PitchCoachSession',schema:2,version:'0.4.0',savedAt:new Date().toISOString(),audio:{name:file.files?.[0]?.name||el('filename').textContent||'',size:file.files?.[0]?.size||null,lastModified:file.files?.[0]?.lastModified||null},settings:settings(),analysis:{tempo:window.pcTempo||null,notes:melodyNotes,key:detectedKey,status:el('analysisStatus').textContent},playback:{time:el('player').currentTime||0},harmony:{notes:window.pitchCoachHarmony?.notes||[],visible:!!window.pitchCoachHarmony?.visible,interval:el('harmonyInterval').value},chordAnalysis:window.pitchCoachChordHarmony?.state||null}}
+function applySettings(d){for(const [id,value] of Object.entries(d||{})){const n=el(id);if(!n)continue;if(n.type==='checkbox')n.checked=!!value;else n.value=value;n.dispatchEvent(new Event('input',{bubbles:true}));n.dispatchEvent(new Event('change',{bubbles:true}));}}
+function restoreAnalysis(d){if(!d)return;window.pcSetTempo?.(d.tempo);melodyToken++;melodyNotes=Array.isArray(d.notes)?d.notes:[];if(d.key&&typeof d.key==='object'){detectedKey=d.key;updateKeyIndicator()}else estimateKey(melodyNotes);el('analysisStatus').textContent=d.status||'Análisis recuperado';el('cancelAnalysis').disabled=!melodyNotes.length;el('cancelAnalysis').textContent=melodyNotes.length?'Deshacer':'Cancelar';window.pitchCoachHarmonyRefresh?.();}
+async function save(as){if(busy)return;if(as||sessionName==='Sin título'){const n=prompt('Nombre de sesión',sessionName==='Sin título'?'Mi sesión.ptch':sessionName);if(!n)return;sessionName=n.replace(/[\\/:*?"<>|]/g,'_');sessionName=sessionName.replace(/\.(pitchcoach|json|ptch)$/i,'')+'.ptch';}sessionName=sessionName.replace(/\.(pitchcoach|json|ptch)$/i,'')+'.ptch';busy=true;try{el('status').textContent='Empaquetando sesión…';const blob=await pack(),u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=sessionName;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),15000);el('pcSessionLabel').textContent=sessionName;menu.open=false;el('status').textContent='Sesión guardada';}catch(e){alert('No se pudo guardar: '+e.message)}finally{busy=false;}}
+function loadSession(d){if(d?.format!=='PitchCoachSession')throw Error('Formato de sesión no reconocido');pending=d;applySettings(d.settings);restoreAnalysis(d.analysis);window.pitchCoachHarmonyRestore?.(d.harmony);window.pitchCoachChordHarmony?.restore(d.chordAnalysis);const selected=file.files?.[0];const same=selected&&selected.name===d.audio?.name&&(d.audio?.size==null||selected.size===d.audio.size);el('pcSessionLabel').textContent=sessionName;if(!same&&d.audio?.name){el('status').textContent='Sesión abierta · selecciona '+d.audio.name+' para recuperar su audio';}else if(same&&Number.isFinite(d.playback?.time)){try{el('player').currentTime=d.playback.time}catch{}}menu.open=false;}
+el('pcSaveAs').onclick=()=>save(true);el('pcOpen').onclick=()=>{menu.open=false;picker.click()};
+picker.onchange=async()=>{const f=picker.files?.[0];if(!f||busy)return;busy=true;try{const {d,assets}=await unpack(f);sessionName=f.name;if(assets)await restoreBundle(d,assets);else loadSession(d)}catch(e){alert('No se pudo abrir la sesión: '+e.message)}finally{busy=false;picker.value=''}};
+el('pcNew').onclick=()=>{menu.open=false;if(!confirm('¿Crear una sesión nueva? Guarda antes tus cambios si deseas conservarlos.'))return;window.pitchCoachHarmonyClear?.();window.pitchCoachChordHarmony?.clear();sessionName='Sin título';pending=null;el('pcSessionLabel').textContent=sessionName;file.value='';file.dispatchEvent(new Event('change',{bubbles:true}));el('player').pause();el('player').removeAttribute('src');el('player').load();el('filename').textContent='Ningún archivo';melodyToken++;melodyNotes=[];estimateKey([]);el('analysisStatus').textContent='Sin analizar';el('status').textContent='Sesión nueva';};
+file.addEventListener('change',()=>{const f=file.files?.[0];if(!f||!pending)return;if(f.name===pending.audio?.name&&(pending.audio?.size==null||f.size===pending.audio.size)){setTimeout(()=>{applySettings(pending.settings);restoreAnalysis(pending.analysis);window.pitchCoachHarmonyRestore?.(pending.harmony);window.pitchCoachChordHarmony?.restore(pending.chordAnalysis);const p=el('player');if(Number.isFinite(pending.playback?.time)){const t=pending.playback.time;const seek=()=>{try{p.currentTime=Math.min(t,Number.isFinite(p.duration)?p.duration:t)}catch{}};if(p.readyState>=1)seek();else p.addEventListener('loadedmetadata',seek,{once:true});}el('status').textContent='Audio de sesión recuperado';pending=null;},0)}else{pending=null;el('status').textContent='Archivo distinto al de la sesión';}});
+document.addEventListener('click',e=>{if(menu.open&&!menu.contains(e.target))menu.open=false});
+})();
+</script><script>
+(()=>{
+ const strip=document.getElementById('chordTimeline'),track=document.getElementById('chordTimelineTrack'),empty=document.getElementById('chordTimelineEmpty'),audio=document.getElementById('player');
+ function chordLabel(c){
+ const shift=shiftAmount||0;
+ if(!shift)return c.name||'—';
+ const parts=(c.name||'').split('/');
+ const suffix=parts[0].replace(/^[A-G](?:#|♯|b|♭)?/,'');
+ const root=names[(c.root+shift+120)%12];
+ return root+suffix+(parts.length>1?'/'+names[((c.bassPriority??c.root)+shift+120)%12]:'');
+ }
+ let oldChords=null,oldWidth=0,oldShift=null,regions=[],cursor=null,last=0;
+ function rebuild(chords,width){
+  track.replaceChildren();regions=[];const frag=document.createDocumentFragment();
+  for(const c of chords){const box=document.createElement('div');box.className='chord-region';box.textContent=chordLabel(c);box.title=chordLabel(c)+' · '+c.start.toFixed(1)+'–'+c.end.toFixed(1)+' s · estimado';box.style.left='0';box.style.willChange='transform';frag.append(box);regions.push({box,chord:c})}
+  cursor=document.createElement('div');cursor.className='chord-cursor';frag.append(cursor);track.append(frag);oldChords=chords;oldWidth=width;oldShift=shiftAmount;
+ }
+ function render(now){
+  requestAnimationFrame(render);if(now-last<45)return;last=now;
+  const chords=window.pitchCoachChordHarmony?.state?.chords||[];
+  if(!chords.length){if(oldChords!==null){track.replaceChildren();track.hidden=true;empty.hidden=false;oldChords=null;regions=[]}return}
+  empty.hidden=true;track.hidden=false;const width=strip.clientWidth;if(!width)return;
+  if(chords!==oldChords||width!==oldWidth||oldShift!==shiftAmount||chords.length!==regions.length)rebuild(chords,width);
+  const left=52,currentX=left+(width-left)*.75,pps=(currentX-left)/5.5;
+  const t=pcRollTime();
+  for(const {box,chord:c} of regions){
+   const x1=Math.max(left,currentX+(c.start-t)*pps),x2=Math.min(width,currentX+(c.end-t)*pps),visible=x2>x1;
+   box.style.display=visible?'flex':'none';if(!visible)continue;
+   box.style.transform=`translate3d(${x1.toFixed(2)}px,0,0)`;box.style.width=(x2-x1).toFixed(2)+'px';
+   box.classList.toggle('active',t>=c.start&&t<c.end);
+  }
+  cursor.style.left=currentX.toFixed(2)+'px';
+ }
+ requestAnimationFrame(render);
+})();
+</script>
+<script>
+(()=>{
+const E=id=>document.getElementById(id), player=E('player'), file=E('file');let serial=0,midiUrl=null;window.pcMidiReady=false;
+window.pcSetTempo=b=>{window.pcTempo=Number.isFinite(b)&&b>0?b:null;E('tempoIndicator').textContent=window.pcTempo?'Tempo: '+Math.round(b)+' BPM':'Tempo: por detectar'};
+function parse(ab){const d=new DataView(ab),u=new Uint8Array(ab);let p=0;const str=n=>String.fromCharCode(...u.slice(p,p+=n)),word=()=>{let v=d.getUint16(p);p+=2;return v},long=()=>{let v=d.getUint32(p);p+=4;return v},vl=()=>{let v=0,b;do{if(p>=u.length)throw Error('MIDI incompleto');b=u[p++];v=v*128+(b&127)}while(b&128);return v};if(str(4)!=='MThd')throw Error('MIDI inválido');let len=long(),head=p,format=word(),tracks=word(),ppq=word();if(format>1||ppq&32768||!ppq)throw Error('Formato MIDI no compatible');p=head+len;let tempos=[{tick:0,us:500000}],notes=[];for(let tr=0;tr<tracks;tr++){if(str(4)!=='MTrk')throw Error('Pista inválida');let size=long(),end=p+size,tick=0,run=0,active=new Map();while(p<end){tick+=vl();let st=u[p++];if(st<128){p--;st=run}else if(st<240)run=st;if(st===255){let type=u[p++],n=vl();if(type===81&&n===3)tempos.push({tick,us:u[p]*65536+u[p+1]*256+u[p+2]});p+=n;continue}if(st===240||st===247){let n=vl();p+=n;continue}if(st<128||st>=240)throw Error('Evento MIDI no compatible');let kind=st&240,ch=st&15,a=u[p++],b=kind===192||kind===208?0:u[p++],key=ch*128+a;if(kind===144&&b){if(!active.has(key))active.set(key,[]);active.get(key).push({tick,midi:a,ch,tr,velocity:b})}else if(kind===128||kind===144){let q=active.get(key);if(q?.length){let n=q.shift();notes.push({...n,endTick:tick})}}}p=end}tempos.sort((a,b)=>a.tick-b.tick);function sec(t){let x=0,last=0,us=500000;for(const e of tempos){if(e.tick>t)break;x+=(e.tick-last)*us/ppq/1e6;last=e.tick;us=e.us}return x+(t-last)*us/ppq/1e6}return {notes:notes.map(n=>({...n,start:sec(n.tick),end:sec(n.endTick),confidence:1})),bpm:60000000/(tempos.filter(t=>t.tick===0).at(-1)?.us||500000)}}
+function choose(groups){return new Promise(resolve=>{const dlg=document.createElement('dialog');dlg.style.cssText='max-width:90%;background:#192630;color:white;border:1px solid #56818d;border-radius:12px;padding:18px';const title=document.createElement('p');title.textContent='Selecciona pista y canal MIDI';dlg.append(title);for(const [k,v] of groups){let b=document.createElement('button');b.style.cssText='display:block;margin:6px 0;width:100%';b.textContent=`Pista ${v[0].tr+1} · Canal ${v[0].ch+1} (${v.length} notas)`;b.onclick=()=>{dlg.close();dlg.remove();resolve(v)};dlg.append(b)}dlg.addEventListener('cancel',()=>{dlg.remove();resolve(null)});document.body.append(dlg);dlg.showModal()})}
+async function renderMidi(notes){const rate=22050,duration=Math.max(...notes.map(n=>n.end))+.15;if(duration>1800)throw Error('MIDI demasiado largo');const samples=new Float32Array(Math.ceil(duration*rate));for(const n of notes){let a=Math.floor(n.start*rate),b=Math.min(samples.length,Math.ceil(n.end*rate)),f=440*2**((n.midi-69)/12);for(let i=a;i<b;i++){let t=(i-a)/rate,env=Math.min(1,t/.008,(b-i)/rate/.025);samples[i]+=.22*env*(n.velocity/127)*Math.sin(2*Math.PI*f*t)}}const ab=new ArrayBuffer(44+samples.length*2),v=new DataView(ab);const st=(p,x)=>{for(let i=0;i<x.length;i++)v.setUint8(p+i,x.charCodeAt(i))};st(0,'RIFF');v.setUint32(4,ab.byteLength-8,true);st(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);st(36,'data');v.setUint32(40,samples.length*2,true);for(let i=0;i<samples.length;i++)v.setInt16(44+i*2,Math.max(-1,Math.min(1,samples[i]))*32767,true);return new Blob([ab],{type:'audio/wav'})}
+async function tempoAudio(f,id){let ctx;try{ctx=new (window.AudioContext||window.webkitAudioContext)();const b=await ctx.decodeAudioData(await f.arrayBuffer()),x=b.getChannelData(0),hop=Math.round(b.sampleRate*.01),env=[];let prev=0;for(let i=0;i+hop<x.length&&i<b.sampleRate*180;i+=hop){let e=0;for(let j=i;j<i+hop;j+=4)e+=x[j]*x[j];e=Math.sqrt(e/hop);env.push(Math.max(0,e-prev));prev=e}let best=0,lag=0;for(let k=30;k<=100;k++){let a=0,c=0,d=0;for(let i=k;i<env.length;i++){a+=env[i]*env[i-k];c+=env[i]**2;d+=env[i-k]**2}let score=a/Math.sqrt(c*d+1e-12);if(score>best){best=score;lag=k}}if(id===serial&&best>.12)window.pcSetTempo(6000/lag)}catch{}finally{ctx?.close()}}
+file.addEventListener('change',async()=>{const id=++serial,f=file.files?.[0];window.pcMidiReady=false;E('harmonyPlay').disabled=true;silence();stopGuide();window.pcSetTempo(null);if(!f||window.pcRestoring)return;if(!/\.(mid|midi)$/i.test(f.name)){tempoAudio(f,id);return}try{const data=parse(await f.arrayBuffer()),groups=new Map();for(const n of data.notes){let k=n.tr+':'+n.ch;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(n)}if(!groups.size)throw Error('No contiene notas');const notes=groups.size===1?[...groups.values()][0]:await choose(groups);if(!notes||id!==serial)return;const blob=await renderMidi(notes);if(id!==serial)return;if(midiUrl)URL.revokeObjectURL(midiUrl);midiUrl=URL.createObjectURL(blob);player.src=midiUrl;player.load();window.pcMidiReady=true;E('harmonyPlay').disabled=false;melodyToken++;melodyNotes=notes.sort((a,b)=>a.start-b.start);estimateKey(melodyNotes);window.pcSetTempo(data.bpm);E('analysisStatus').textContent='MIDI importado · '+notes.length+' notas';E('analyze').disabled=true;E('dspRun').disabled=true;E('cancelAnalysis').disabled=false;E('cancelAnalysis').textContent='Deshacer';window.pitchCoachHarmonyRefresh?.();}catch(e){E('analysisStatus').textContent='Error MIDI: '+e.message}});
+E('pcMidiExport').onclick=()=>{const notes=window.pitchCoachHarmony?.notes?.length?window.pitchCoachHarmony.notes:melodyNotes;if(!notes.length){alert('No hay melodía para exportar');return}const bpm=window.pcTempo||120,us=Math.round(60000000/bpm),events=[];for(const n of notes){let m=Math.max(0,Math.min(127,Math.round(n.midi+shiftAmount))),a=Math.max(0,Math.round(n.start*bpm*8)),b=Math.max(a+1,Math.round(n.end*bpm*8));events.push([a,144,m,90],[b,128,m,0])}events.sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const tr=[0,255,81,3,us>>16&255,us>>8&255,us&255];let last=0;function vl(n){let a=[n&127];while(n>>=7)a.unshift((n&127)|128);return a}for(const e of events){tr.push(...vl(e[0]-last),...e.slice(1));last=e[0]}tr.push(0,255,47,0);let l=tr.length,bytes=new Uint8Array([77,84,104,100,0,0,0,6,0,0,0,1,1,224,77,84,114,107,l>>>24,l>>>16&255,l>>>8&255,l&255,...tr]);let a=document.createElement('a'),u=URL.createObjectURL(new Blob([bytes],{type:'audio/midi'}));a.href=u;a.download='Pitch Coach - melodía.mid';a.click();setTimeout(()=>URL.revokeObjectURL(u),15000);E('pcSessionMenu').open=false};
+let scheduled=new Map(),lastClock=null,lastNotes=null,lastSignature='';
+function silence(){for(const v of scheduled.values()){try{v.g.gain.cancelScheduledValues(v.ctx.currentTime);v.g.gain.setValueAtTime(0,v.ctx.currentTime);v.o.stop();v.o2.stop()}catch{}}scheduled.clear();lastClock=null}
+function scheduleVoice(n,t,rate,ctx){const instrument=E('guideInstrument').value;if(instrument==='off')return;const start=ctx.currentTime+Math.max(0,(n.start-t)/rate),end=ctx.currentTime+Math.max(.005,(n.end-t)/rate),o=ctx.createOscillator(),o2=ctx.createOscillator(),g=ctx.createGain(),filter=ctx.createBiquadFilter(),mix=ctx.createGain();const f=440*2**((n.midi+shiftAmount-69)/12),level=Number(E('guideVolume').value)/100*(instrument==='piano'?.65:.22);o.type=instrument==='pad'?'sawtooth':'triangle';o.frequency.value=f;o2.frequency.value=instrument==='pad'?f*1.003:f*2;mix.gain.value=instrument==='pad'?.16:.22;filter.type='lowpass';filter.frequency.value=instrument==='pad'?1400:6500;o.connect(filter);o2.connect(mix);mix.connect(filter);filter.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(0,start);g.gain.linearRampToValueAtTime(level,Math.min(end,start+.003));g.gain.setTargetAtTime(0,end,.008);o.start(start);o2.start(start);o.stop(end+.04);o2.stop(end+.04);scheduled.set(n,{o,o2,g,ctx,end});o.onended=()=>{try{o.disconnect();o2.disconnect();mix.disconnect();filter.disconnect();g.disconnect()}catch{}}}
+E('harmonyPlay').addEventListener('change',silence);for(const event of ['pause','seeking','ended','ratechange','waiting','emptied'])player.addEventListener(event,silence);
+setInterval(()=>{if(!window.pcMidiReady||player.paused||player.seeking||player.readyState<3||!E('harmonyPlay').checked||!musicCtx||musicCtx.state!=='running'){silence();return}const rate=player.playbackRate||1,notes=window.pitchCoachHarmony?.notes||[],signature=[shiftAmount,E('guideInstrument').value,E('guideVolume').value].join(':');const t=pcPlaybackTime()+(Number(musicCtx.baseLatency||0)+Number(musicCtx.outputLatency||0))*rate,now=musicCtx.currentTime;if(lastNotes!==notes||signature!==lastSignature||(lastClock&&Math.abs(t-lastClock.t-(now-lastClock.now)*rate)>.10))silence();lastNotes=notes;lastSignature=signature;lastClock={t,now};for(const [n,v] of scheduled)if(v.end+.05<now)scheduled.delete(n);for(const n of notes){if(n.start>t+.08*rate)break;if(n.end>t&&!scheduled.has(n))scheduleVoice(n,t,rate,musicCtx)}},12);
+})();
+</script></body></html>
